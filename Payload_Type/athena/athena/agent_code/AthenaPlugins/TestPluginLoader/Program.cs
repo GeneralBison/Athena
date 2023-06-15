@@ -21,7 +21,7 @@ namespace TestPluginLoader
         public static AssemblyLoadContext loadcontext = new AssemblyLoadContext("commands");
         static async Task Main(string[] args)
         {
-            await TestCoff();
+            await TestScreenShot();
             Console.WriteLine("Finished.");
             Console.ReadKey();
         }
@@ -38,6 +38,21 @@ namespace TestPluginLoader
             new Coff().Execute(parameters);
             var res = await TaskResponseHandler.GetTaskResponsesAsync();
             Console.WriteLine(res.FirstOrDefault());
+        }
+
+        static async Task TestGetGroup()
+        {
+                Dictionary<string, string> parameters = new Dictionary<string, string>();
+                //parameters.Add("asm", Misc.Base64Encode(File.ReadAllBytes(@"C:\Users\scott\Downloads\whoami.x64.o")));
+                parameters.Add("group", "Administrators");
+                //parameters.Add("arguments", "");
+                //parameters.Add("timeout", "30");
+
+                parameters.Add("task-id", "1");
+            parameters.Add("hostname", "");
+                new GetLocalGroup().Execute(parameters);
+                var res = await TaskResponseHandler.GetTaskResponsesAsync();
+                Console.WriteLine(res.FirstOrDefault());
         }
 
         static async Task TestShellcodeInject()
@@ -115,6 +130,16 @@ namespace TestPluginLoader
             parameters.Add("cidr", "10.10.0.2/24");
             parameters.Add("timeout", "60");
             new Caffeinate().Execute(parameters);
+            var res = await TaskResponseHandler.GetTaskResponsesAsync();
+            Console.WriteLine(res.FirstOrDefault());
+        }
+        static async Task TestScreenShot()
+        {
+            Dictionary<string, string> parameters = new Dictionary<string, string>();
+            parameters.Add("task-id", "1");
+            parameters.Add("cidr", "10.10.0.2/24");
+            parameters.Add("timeout", "60");
+            new Screenshot().Execute(parameters);
             var res = await TaskResponseHandler.GetTaskResponsesAsync();
             Console.WriteLine(res.FirstOrDefault());
         }

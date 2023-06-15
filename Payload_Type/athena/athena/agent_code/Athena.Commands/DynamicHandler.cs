@@ -37,7 +37,10 @@ namespace Athena.Commands
         public const long GtMdlHndl = 116710781270081; //GetModuleHandle
         public const long WitFrObj = 7756014350381986196; //WaitForSingleObject
         public const long GetExtCd = 11690567101444170; //GetExitCodeThread
-
+        public const long NetLclGrpEnum = 81661978141729079;
+        public const long NtLclGrpGtMmbr = -1757872591017805887;
+        public const long NtApiFreeBuf = 8165256722140411;
+        public const long EnmDispMon = 9079855287171056145; //EnumDisplayMonitors
         //Virtual Protect Delegate
         [UnmanagedFunctionPointer(CallingConvention.StdCall, SetLastError = true)]
         public delegate Boolean DynamicVirtPro(IntPtr lpAddress, UIntPtr dwSize, uint flNewProtect, out uint lpflOldProtect);
@@ -112,6 +115,51 @@ namespace Athena.Commands
 
         [UnmanagedFunctionPointer(CallingConvention.StdCall, SetLastError = true)]
         public delegate bool DynamicGetExitCdeThrd(IntPtr hThread, out int lpExitCode);
+
+        [UnmanagedFunctionPointer(CallingConvention.StdCall, SetLastError = true)]
+        public delegate int SHGetFolderPath(IntPtr hwndOwner, int nFolder, IntPtr hToken, int dwFlags, StringBuilder lpszPath);
+
+        [UnmanagedFunctionPointer(CallingConvention.StdCall, SetLastError = true)]
+        public delegate int DynamicGtLclGrpMmbrs(
+            [MarshalAs(UnmanagedType.LPWStr)] string servername,
+            [MarshalAs(UnmanagedType.LPWStr)] string localgroupname,
+            int level,
+            out IntPtr bufptr,
+            int prefmaxlen,
+            out int entriesread,
+            out int totalentries,
+            IntPtr resume_handle
+         );
+
+
+        [UnmanagedFunctionPointer(CallingConvention.StdCall, SetLastError = true)]
+        public delegate int DynamicGetGroupEnum(
+           [MarshalAs(UnmanagedType.LPWStr)]
+           string servername,
+           int level,
+           out IntPtr bufptr,
+           int prefmaxlen,
+           out int entriesread,
+           out int totalentries,
+           ref int resume_handle
+        );
+
+        [UnmanagedFunctionPointer(CallingConvention.StdCall, SetLastError = true)]
+        public delegate int DynamicNetApiFreeBuf(IntPtr buffer);
+        
+        [StructLayout(LayoutKind.Sequential)]
+        public struct RECT
+        {
+            public int left;
+            public int top;
+            public int right;
+            public int bottom;
+        }
+
+
+        [UnmanagedFunctionPointer(CallingConvention.StdCall, SetLastError = true)]
+        public delegate bool DynamicEnDispMon(IntPtr hdc, IntPtr lprcClip, MonitorEnumProc lpfnEnum, IntPtr dwData);
+        public delegate bool MonitorEnumProc(IntPtr hMonitor, IntPtr hdcMonitor, ref RECT lprcMonitor, IntPtr dwData);
 
         //[UnmanagedFunctionPointer(CallingConvention.StdCall, SetLastError = true)]
         //public delegate void DynamicZeroMem(IntPtr addr, int size);

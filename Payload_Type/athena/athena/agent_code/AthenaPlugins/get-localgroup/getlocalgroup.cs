@@ -7,9 +7,12 @@ using Athena.Models.Responses;
 
 namespace Plugins
 {
-    public class Plugin : AthenaPlugin
+    public class GetLocalGroup : AthenaPlugin
     {
         public override string Name => "get-localgroup";
+        //private DynamicHandler.DynamicGtLclGrpMmbrs dlgNLGGM = (DynamicHandler.DynamicGtLclGrpMmbrs)DynamicHandler.findDeleg("Netapi32.dll", DynamicHandler.NtLclGrpGtMmbr, typeof(DynamicHandler.DynamicGtLclGrpMmbrs));
+        //private DynamicHandler.DynamicGetGroupEnum dlgNLGE = (DynamicHandler.DynamicGetGroupEnum)DynamicHandler.findDeleg("Netapi32.dll", DynamicHandler.NetLclGrpEnum, typeof(DynamicHandler.DynamicGetGroupEnum));
+        //private DynamicHandler.DynamicNetApiFreeBuf dlgNABF = (DynamicHandler.DynamicNetApiFreeBuf)DynamicHandler.findDeleg("Netapi32.dll", DynamicHandler.NtApiFreeBuf, typeof(DynamicHandler.DynamicNetApiFreeBuf));
         [DllImport("NetAPI32.dll", CharSet = CharSet.Unicode)]
         public extern static int NetLocalGroupGetMembers(
             [MarshalAs(UnmanagedType.LPWStr)] string servername,
@@ -97,7 +100,7 @@ namespace Plugins
             int EntriesRead;
             int TotalEntries;
             IntPtr Resume = IntPtr.Zero;
-            IntPtr bufPtr;
+            IntPtr bufPtr = IntPtr.Zero ;
             int val = NetLocalGroupGetMembers(ServerName, GroupName, 2, out bufPtr, -1, out EntriesRead, out TotalEntries, Resume);
             if (EntriesRead > 0)
             {
