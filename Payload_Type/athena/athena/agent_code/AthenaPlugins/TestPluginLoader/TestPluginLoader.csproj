@@ -19,6 +19,7 @@
     <ProjectReference Include="..\amsi\amsi.csproj" />
     <ProjectReference Include="..\arp\arp.csproj" />
     <ProjectReference Include="..\basicplugin\basicplugin.csproj" />
+    <ProjectReference Include="..\caffeinate\caffeinate.csproj" />
     <ProjectReference Include="..\cat\cat.csproj" />
     <ProjectReference Include="..\cd\cd.csproj" />
     <ProjectReference Include="..\coff\coff.csproj" />

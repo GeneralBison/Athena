@@ -12,6 +12,7 @@ namespace coff.coff
 {
     class BofRunner
     {
+
       //test
         private readonly Coff beacon_helper;
         private Coff bof;

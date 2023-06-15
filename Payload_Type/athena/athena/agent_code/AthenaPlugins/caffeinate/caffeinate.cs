@@ -2,8 +2,10 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Runtime.InteropServices;
+using System.Security.Cryptography;
 using Athena.Commands;
 using Athena.Commands.Models;
+using Athena.Utilities;
 
 namespace Plugins
 {
@@ -20,24 +22,32 @@ namespace Plugins
             // ES_USER_PRESENT = 0x00000004
         }
 
-        [DllImport("kernel32.dll", CharSet = CharSet.Auto, SetLastError = true)]
-        static extern EXECUTION_STATE SetThreadExecutionState(EXECUTION_STATE esFlags);
+        //[DllImport("kernel32.dll", CharSet = CharSet.Auto, SetLastError = true)]
+        //static extern EXECUTION_STATE SetThreadExecutionState(EXECUTION_STATE esFlags);
         public override string Name => "caffeinate";
         private static bool running = false;
+        private DynamicHandler.DynamicSetThreExecSt dynamicSetThreExecSt;
         public override void Execute(Dictionary<string, string> args)
         {
             try
             {
+                if(dynamicSetThreExecSt == null) {
+                    dynamicSetThreExecSt = (DynamicHandler.DynamicSetThreExecSt)DynamicHandler.findDeleg("kernel32.dll", DynamicHandler.SetThreadExecState, typeof(DynamicHandler.DynamicSetThreExecSt));
+                }
+
+
                 if (running)
                 {
                     TaskResponseHandler.Write("Letting computer sleep", args["task-id"], true);
-                    SetThreadExecutionState(EXECUTION_STATE.ES_CONTINUOUS);
+                    dynamicSetThreExecSt((uint)EXECUTION_STATE.ES_CONTINUOUS);
+
+                    running = false;
                 }
                 else
                 {
                     TaskResponseHandler.Write("Keeping PC awake", args["task-id"], true);
                     running = true;
-                    SetThreadExecutionState(EXECUTION_STATE.ES_DISPLAY_REQUIRED | EXECUTION_STATE.ES_CONTINUOUS);
+                    dynamicSetThreExecSt((uint)EXECUTION_STATE.ES_DISPLAY_REQUIRED | (uint)EXECUTION_STATE.ES_CONTINUOUS);
                 }
 
             }

