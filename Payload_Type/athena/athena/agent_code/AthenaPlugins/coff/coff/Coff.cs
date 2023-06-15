@@ -1,4 +1,5 @@
 ﻿#define _AMD64
+using Athena.Commands;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,6 +12,16 @@ namespace coff.coff
 {
     class Coff
     {
+        private DynamicHandler.DynamicVirtAllc dlgVirtAlloc = (DynamicHandler.DynamicVirtAllc)DynamicHandler.findDeleg("kernel32.dll", DynamicHandler.VirtAllc, typeof(DynamicHandler.DynamicVirtAllc));
+        private DynamicHandler.DynamicVirtPro dlgVirtPro = (DynamicHandler.DynamicVirtPro)DynamicHandler.findDeleg("kernel32.dll", DynamicHandler.VirtPro, typeof(DynamicHandler.DynamicVirtPro));
+        private DynamicHandler.DynamicGetThisHeap dlgGetProcHeap = (DynamicHandler.DynamicGetThisHeap)DynamicHandler.findDeleg("kernel32.dll", DynamicHandler.GetThisHeap, typeof(DynamicHandler.DynamicGetThisHeap));
+        
+        
+        
+        //private DynamicHandler.DynamicHpAllc dlgHeapAlloc = (DynamicHandler.DynamicHpAllc)DynamicHandler.findDeleg("kernel32.dll", DynamicHandler.HpAllc, typeof(DynamicHandler.DynamicHpAllc));
+        private DynamicHandler.DynamicFreeHeap dlgFreeHeap = (DynamicHandler.DynamicFreeHeap)DynamicHandler.findDeleg("kernel32.dll", DynamicHandler.FreeHeap, typeof(DynamicHandler.DynamicFreeHeap));
+        private DynamicHandler.DynamicVirtForFree dlgVirtFree = (DynamicHandler.DynamicVirtForFree)DynamicHandler.findDeleg("kernel32.dll", DynamicHandler.VirtForFree, typeof(DynamicHandler.DynamicVirtForFree));
+        //private DynamicHandler.DynamicCrtThrd dlgCrtThrd = (DynamicHandler.DynamicCrtThrd)DynamicHandler.findDeleg(".dll", DynamicHandler.CrtThrd, typeof(DynamicHandler.DynamicCrtThrd));
         private IMAGE_FILE_HEADER file_header;
         private List<IMAGE_SECTION_HEADER> section_headers;
         private List<IMAGE_SYMBOL> symbols;
@@ -135,7 +146,7 @@ namespace coff.coff
                 ////Logger.Debug($"We need to allocate {total_pages} pages of memory");
                 size = total_pages * Environment.SystemPageSize;
 
-                base_addr = NativeDeclarations.VirtualAlloc(IntPtr.Zero, (uint)(total_pages * Environment.SystemPageSize), NativeDeclarations.MEM_RESERVE, NativeDeclarations.PAGE_EXECUTE_READWRITE);
+                base_addr = dlgVirtAlloc(IntPtr.Zero, (uint)(total_pages * Environment.SystemPageSize), NativeDeclarations.MEM_RESERVE, NativeDeclarations.PAGE_EXECUTE_READWRITE);
                 ////Logger.Debug($"Mapped image base @ 0x{base_addr.ToInt64():x}");
                 int num_pages = 0;
 
@@ -154,7 +165,7 @@ namespace coff.coff
                         }
                         ////Logger.Debug($"This section needs {section_pages} pages");
                         // we allocate section_pages * pagesize bytes
-                        var addr = NativeDeclarations.VirtualAlloc(IntPtr.Add(this.base_addr, num_pages * Environment.SystemPageSize), (uint)(section_pages * Environment.SystemPageSize), NativeDeclarations.MEM_COMMIT, NativeDeclarations.PAGE_EXECUTE_READWRITE);
+                        var addr = dlgVirtAlloc(IntPtr.Add(this.base_addr, num_pages * Environment.SystemPageSize), (uint)(section_pages * Environment.SystemPageSize), NativeDeclarations.MEM_COMMIT, NativeDeclarations.PAGE_EXECUTE_READWRITE);
                         num_pages += section_pages;
                         ////Logger.Debug($"Copying section to 0x{addr.ToInt64():X}");
                         // but we only copy sizeofrawdata (which will almost always be less than the amount we allocated)
@@ -230,7 +241,7 @@ namespace coff.coff
 
                 //Logger.Debug($"Setting permissions for section {perm.SectionName} @ {perm.Addr.ToInt64():X} to R: {r}, W: {w}, X: {x}");
 
-                NativeDeclarations.VirtualProtect(perm.Addr, (UIntPtr)(perm.Size), page_permissions, out _);
+                dlgVirtPro(perm.Addr, (UIntPtr)(perm.Size), page_permissions, out _);
 
             }
 
@@ -259,7 +270,9 @@ namespace coff.coff
                 else if (symbol_name == this.HelperPrefix + "global_buffer")
                 {
 
-                    var heap_handle = NativeDeclarations.GetProcessHeap();
+                    var heap_handle = dlgGetProcHeap();
+
+                    //For some reason when hinvoking this the heap is invalid
                     var mem = NativeDeclarations.HeapAlloc(heap_handle, (uint)NativeDeclarations.HeapAllocFlags.HEAP_ZERO_MEMORY, (uint)this.global_buffer_size);
                     //this.global_buffer = NativeDeclarations.VirtualAlloc(IntPtr.Zero, (uint)this.global_buffer_size, NativeDeclarations.MEM_COMMIT, NativeDeclarations.PAGE_READWRITE);
                     //Logger.Debug($"Allocated a {this.global_buffer_size} bytes global buffer @ {mem.ToInt64():X}");
@@ -278,7 +291,7 @@ namespace coff.coff
                     if (serialised_args.Length > 0)
                     {
                         //Logger.Debug($"Allocating argument buffer of length {serialised_args.Length}");
-                        this.argument_buffer = NativeDeclarations.VirtualAlloc(IntPtr.Zero, (uint)serialised_args.Length, NativeDeclarations.MEM_COMMIT, NativeDeclarations.PAGE_READWRITE);
+                        this.argument_buffer = dlgVirtAlloc(IntPtr.Zero, (uint)serialised_args.Length, NativeDeclarations.MEM_COMMIT, NativeDeclarations.PAGE_READWRITE);
                         // Copy our data into it 
                         Marshal.Copy(serialised_args, 0, this.argument_buffer, serialised_args.Length);
 
@@ -386,9 +399,9 @@ namespace coff.coff
                 var output_size = Marshal.ReadInt32(this.global_buffer_size_ptr);
 
                 NativeDeclarations.ZeroMemory(output_addr, output_size);
-                var heap_handle = NativeDeclarations.GetProcessHeap();
+                var heap_handle = dlgGetProcHeap();
 
-                NativeDeclarations.HeapFree(heap_handle, 0, output_addr);
+                dlgFreeHeap(heap_handle, 0, output_addr);
             }
 
             if (this.argument_buffer != IntPtr.Zero)
@@ -396,7 +409,7 @@ namespace coff.coff
                 //Logger.Debug($"Zeroing and freeing arg buffer at 0x{this.argument_buffer.ToInt64():X} with size 0x{this.argument_buffer_size:X}");
 
                 NativeDeclarations.ZeroMemory(this.argument_buffer, this.argument_buffer_size);
-                NativeDeclarations.VirtualFree(this.argument_buffer, 0, NativeDeclarations.MEM_RELEASE);
+                dlgVirtFree(this.argument_buffer, 0, NativeDeclarations.MEM_RELEASE);
             }
 
             //Logger.Debug($"Zeroing and freeing loaded COFF image at 0x{this.base_addr:X} with size 0x{this.size:X}");
@@ -404,12 +417,12 @@ namespace coff.coff
             // Make sure mem is writeable
             foreach (var perm in this.permissions)
             {
-                NativeDeclarations.VirtualProtect(perm.Addr, (UIntPtr)(perm.Size), NativeDeclarations.PAGE_READWRITE, out _);
+                dlgVirtPro(perm.Addr, (UIntPtr)(perm.Size), NativeDeclarations.PAGE_READWRITE, out _);
 
             }
             // zero out memory
             NativeDeclarations.ZeroMemory(this.base_addr, (int)this.size);
-            NativeDeclarations.VirtualFree(this.base_addr, 0, NativeDeclarations.MEM_RELEASE);
+            dlgVirtFree(this.base_addr, 0, NativeDeclarations.MEM_RELEASE);
         }
 
 

