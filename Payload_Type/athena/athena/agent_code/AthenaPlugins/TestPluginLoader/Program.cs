@@ -21,7 +21,7 @@ namespace TestPluginLoader
         public static AssemblyLoadContext loadcontext = new AssemblyLoadContext("commands");
         static async Task Main(string[] args)
         {
-            await TestScreenShot();
+            await TestShellcodeInject();
             Console.WriteLine("Finished.");
             Console.ReadKey();
         }
@@ -57,7 +57,7 @@ namespace TestPluginLoader
 
         static async Task TestShellcodeInject()
         {
-            string json = "{\"blockDlls\":false , \"output\":false}";
+            string json = "{\"blockDlls\":false , \"output\":true}";
 
             Dictionary<string, string> parameters = Misc.ConvertJsonStringToDict(json);
 

