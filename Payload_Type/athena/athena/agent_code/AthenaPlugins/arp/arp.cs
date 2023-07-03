@@ -42,7 +42,6 @@ namespace Plugins
             }
             catch (Exception e)
             {
-                Console.WriteLine(e.ToString());
                 return $"{ipString} - Invalid" + Environment.NewLine;
             }
             return "";

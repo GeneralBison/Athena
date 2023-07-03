@@ -9,6 +9,17 @@ namespace shellcode_inject
 {
     public static class Native
     {
+        [DllImport("kernel32.dll", SetLastError = true)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        public static extern bool InitializeProcThreadAttributeList(
+            IntPtr lpAttributeList, int dwAttributeCount, int dwFlags, ref IntPtr lpSize);
+
+        [DllImport("kernel32.dll", SetLastError = true)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        public static extern bool UpdateProcThreadAttribute(
+            IntPtr lpAttributeList, uint dwFlags, IntPtr Attribute, IntPtr lpValue,
+            IntPtr cbSize, IntPtr lpPreviousValue, IntPtr lpReturnSize);
+
         //testt
         //[DllImport("kernel32.dll")]
         //[return: MarshalAs(UnmanagedType.Bool)]
@@ -35,11 +46,6 @@ namespace shellcode_inject
 //        public static extern bool UpdateProcThreadAttribute(
 //            IntPtr lpAttributeList, uint dwFlags, IntPtr Attribute, IntPtr lpValue,
 //            IntPtr cbSize, IntPtr lpPreviousValue, IntPtr lpReturnSize);
-
-//        [DllImport("kernel32.dll", SetLastError = true)]
-//        [return: MarshalAs(UnmanagedType.Bool)]
-//        public static extern bool InitializeProcThreadAttributeList(
-//            IntPtr lpAttributeList, int dwAttributeCount, int dwFlags, ref IntPtr lpSize);
 
 //        [DllImport("kernel32.dll", SetLastError = true)]
 //        [return: MarshalAs(UnmanagedType.Bool)]

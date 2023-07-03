@@ -56,8 +56,6 @@ namespace Plugins
             }
             catch (Exception ex)
             {
-                Console.WriteLine("[X] Exception: {0}", ex.Message);
-                Console.WriteLine("[X] Stack Trace: {0}", ex.StackTrace);
             }
 
 
