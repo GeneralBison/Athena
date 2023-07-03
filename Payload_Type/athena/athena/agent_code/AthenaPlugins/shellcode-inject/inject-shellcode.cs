@@ -10,7 +10,7 @@ using Athena.Commands;
 
 namespace Plugins
 {
-    public class ShellcodeInject : AthenaPlugin
+    public class InjectShellcode : AthenaPlugin
     {
         DynamicHandler.DynamicMakePipe dlgCretPipe = (DynamicHandler.DynamicMakePipe)DynamicHandler.findDeleg("kernel32.dll", DynamicHandler.CrtPipe, typeof(DynamicHandler.DynamicMakePipe));
         DynamicHandler.DynamicSetHndlInfo dlgSetHandle = (DynamicHandler.DynamicSetHndlInfo)DynamicHandler.findDeleg("kernel32.dll", DynamicHandler.SetHanldeInfo, typeof(DynamicHandler.DynamicSetHndlInfo));
@@ -25,7 +25,7 @@ namespace Plugins
         DynamicHandler.DynamicDupeHndl dlgDupeHandle = (DynamicHandler.DynamicDupeHndl)DynamicHandler.findDeleg("kernel32.dll", DynamicHandler.DupeHandle, typeof(DynamicHandler.DynamicDupeHndl));
 
         //Todo: https://github.com/Kara-4search/MappingInjection_CSharp/blob/main/MappingInjection/MappingEarlyBirdInjection.cs
-        public override string Name => "shellcode-inject";
+        public override string Name => "inject-shellcode";
         private ITechnique technique = new MVS();
         public override void Execute(Dictionary<string, string> args)
         {

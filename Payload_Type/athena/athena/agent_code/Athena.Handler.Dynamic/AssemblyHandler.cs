@@ -19,8 +19,8 @@ namespace Athena.Commands
         private ConcurrentDictionary<string, IPlugin> loadedPlugins { get; set; }
         public AssemblyHandler()
         {
-            this.commandContext = new AssemblyLoadContext("athcmd");
-            this.executeAssemblyContext = new ExecuteAssemblyContext();
+            this.commandContext = new AssemblyLoadContext(Misc.RandomString(Misc.GenerateSmallerRandomNumber()));
+            this.executeAssemblyContext = new ExecuteAssemblyContext(Misc.RandomString(Misc.GenerateSmallerRandomNumber()));
             this.loadedPlugins = new ConcurrentDictionary<string, IPlugin>();
         }
         /// <summary>
@@ -137,6 +137,18 @@ namespace Athena.Commands
                 //Invoke the Assembly
                 assembly.EntryPoint.Invoke(null, new object[] { await Misc.SplitCommandLine(ea.arguments) }); //I believe this blocks until it's finished
             }
+            catch (BadImageFormatException be)
+            {
+                PluginHandler.ReleaseStdOut();
+                return new ResponseResult
+                {
+                    completed = true,
+                    user_output = string.Empty,
+                    task_id = job.task.id,
+                    process_response = new Dictionary<string, string>() { { "message", "0x43" } },
+                    status = "error"
+                }.ToJson();
+            }
             catch (Exception e)
             {
                 PluginHandler.ReleaseStdOut();
@@ -175,7 +187,7 @@ namespace Athena.Commands
             try
             {
                 this.executeAssemblyContext.Unload();
-                this.executeAssemblyContext = new ExecuteAssemblyContext();
+                this.executeAssemblyContext = new ExecuteAssemblyContext(Misc.RandomString(Misc.GenerateSmallerRandomNumber()));
                 return new ResponseResult
                 {
                     task_id = job.task.id,
