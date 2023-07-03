@@ -61,8 +61,8 @@ class LoadCommand(CommandBase):
             await message_utilities.send_agent_message("Please load coff to enable this command", task)
             raise Exception("Please load coff to enable this command")
         elif command in shellcode_commands:
-            await message_utilities.send_agent_message("Please load shellcode-inject to enable this command", task)
-            raise Exception("Please load shellcode-inject to enable this command")
+            await message_utilities.send_agent_message("Please load inject-shellcode to enable this command", task)
+            raise Exception("Please load inject-shellcode to enable this command")
         elif command in ds_commands:
             await message_utilities.send_agent_message("Please load ds to enable this command", task)
             raise Exception("Please load ds to enable this command")
@@ -128,7 +128,7 @@ class LoadCommand(CommandBase):
                                                                             CommandName="load-assembly",
                                                                             Tasks = tasks)
             subtask = await SendMythicRPCTaskCreateSubtaskGroup(createSubtaskMessage)
-        elif(command == "shellcode-inject"):
+        elif(command == "inject-shellcode"):
             addCommandMessage = MythicRPCCallbackAddCommandMessage(task.id, shellcode_commands)
             response = await SendMythicRPCCallbackAddCommand(addCommandMessage)
             if not response.Success:

@@ -2,10 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Runtime.InteropServices;
-using System.Security.Cryptography;
 using Athena.Commands;
 using Athena.Commands.Models;
-using Athena.Utilities;
 
 namespace Plugins
 {
@@ -35,22 +33,23 @@ namespace Plugins
         {
             try
             {
-                if(dynamicSetThreExecSt == null) {
-                    dynamicSetThreExecSt = (DynamicHandler.DynamicSetThreExecSt)DynamicHandler.findDeleg("kernel32.dll", DynamicHandler.SetThreadExecState, typeof(DynamicHandler.DynamicSetThreExecSt));
-                }
-
-
                 if (running)
                 {
                     running = false;
                     TaskResponseHandler.Write("Letting computer sleep", args["task-id"], true);
-                    SetThreadExecutionState(EXECUTION_STATE.ES_CONTINUOUS);
+                    // How do i stop?
                 }
                 else
                 {
                     TaskResponseHandler.Write("Keeping PC awake", args["task-id"], true);
                     running = true;
-                    SetThreadExecutionState(EXECUTION_STATE.ES_DISPLAY_REQUIRED | EXECUTION_STATE.ES_CONTINUOUS);
+                    while (true)
+                    {
+                        // PressKey(VK_F15);
+                        ReleaseKey(VK_F15);
+                        Thread.Sleep(59000); // Press the key every 59 seconds
+                        // Thread.Sleep(1000); // Pause for 1 second before repeating
+                    }
                 }
             }
             catch (Exception e)

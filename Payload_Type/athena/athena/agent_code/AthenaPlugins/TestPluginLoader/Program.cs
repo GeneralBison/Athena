@@ -22,7 +22,7 @@ namespace TestPluginLoader
         static async Task Main(string[] args)
         {
             Console.WriteLine("Starting Keylogger.");
-            Task.Run(() => TestKeylogger());
+            //Task.Run(() => TestKeylogger());
             Console.WriteLine("Delaying.");
             await Task.Delay(10000);
             Console.WriteLine("Done.");
