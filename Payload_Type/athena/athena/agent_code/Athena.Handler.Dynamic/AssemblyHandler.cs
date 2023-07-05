@@ -4,11 +4,9 @@ using Athena.Utilities;
 using System.Collections.Concurrent;
 using System.Reflection;
 using System.Runtime.Loader;
-using Athena.Models;
 using System.Text.Json;
 using Athena.Commands.Models;
 using Athena.Models.Responses;
-using Athena.Models.Assembly;
 
 namespace Athena.Commands
 {

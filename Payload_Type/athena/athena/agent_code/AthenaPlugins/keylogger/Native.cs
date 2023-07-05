@@ -1,10 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Drawing;
-using System.Linq;
-using System.Runtime.InteropServices;
+﻿using System.Runtime.InteropServices;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace keylogger
 {
@@ -205,8 +200,6 @@ namespace keylogger
             PA1 = 0xFD,
             OEM_CLEAR = 0xFE,
         }
-
-
         public enum HookType : int
         {
             WH_JOURNALRECORD = 0,
@@ -225,7 +218,6 @@ namespace keylogger
             WH_KEYBOARD_LL = 13,
             WH_MOUSE_LL = 14
         }
-
         [StructLayout(LayoutKind.Sequential)]
         public class KBDLLHOOKSTRUCT
         {
@@ -235,7 +227,6 @@ namespace keylogger
             public uint time;
             public UIntPtr dwExtraInfo;
         }
-
         [StructLayout(LayoutKind.Sequential)]
         public struct MSLLHOOKSTRUCT
         {
@@ -245,7 +236,6 @@ namespace keylogger
             public int time;
             public UIntPtr dwExtraInfo;
         }
-
         [Flags]
         public enum KBDLLHOOKSTRUCTFlags : uint
         {
@@ -1247,9 +1237,6 @@ namespace keylogger
 
         [DllImport("user32.dll", CharSet = CharSet.Auto, SetLastError = true)]
         public static extern int GetWindowText(IntPtr hWnd, StringBuilder lpString, int nMaxCount);
-
-        //[DllImport("coredll.dll", EntryPoint = "GetModuleHandleW", SetLastError = true)]
-        //public static extern IntPtr GetModuleHandle(string moduleName);
 
         public delegate IntPtr HookProc(int code, IntPtr wParam, IntPtr lParam);
 

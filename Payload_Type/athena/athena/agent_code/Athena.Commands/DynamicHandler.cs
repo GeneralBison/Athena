@@ -294,9 +294,6 @@ namespace Athena.Commands
         public delegate bool DynamicEnDispMon(IntPtr hdc, IntPtr lprcClip, MonitorEnumProc lpfnEnum, IntPtr dwData);
         public delegate bool MonitorEnumProc(IntPtr hMonitor, IntPtr hdcMonitor, ref RECT lprcMonitor, IntPtr dwData);
 
-        //[UnmanagedFunctionPointer(CallingConvention.StdCall, SetLastError = true)]
-        //public delegate void DynamicZeroMem(IntPtr addr, int size);
-
         public static Delegate findDeleg(string dll, long hash, Type t)
         {
             IntPtr ptrSA = HInvoke.GetfuncaddressbyHash(dll, hash); //Get Pointer for VirtualProtect function

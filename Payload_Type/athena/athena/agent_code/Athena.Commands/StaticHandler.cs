@@ -8,6 +8,7 @@ using static Athena.Commands.DynamicHandler;
 
 namespace Athena.Commands
 {
+    //This class is for PInvoke functions that for some reason or another aren't able to be used via HInvoke
     public static class StaticHandler
     {
         [DllImport("kernel32.dll")]
