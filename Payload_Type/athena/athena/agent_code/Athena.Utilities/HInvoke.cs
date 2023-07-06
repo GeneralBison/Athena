@@ -56,7 +56,6 @@ namespace Athena.Utilities
                 int function_name_rva = Marshal.ReadInt32(func_name_address);
                 IntPtr func_name_string = IntPtr.Add(handle, function_name_rva);
 
-
                 functionname = Marshal.PtrToStringAnsi(func_name_string);
                 if (Gethashfromstring(functionname) == hash)
                 {
@@ -66,14 +65,76 @@ namespace Athena.Utilities
 
                     func_exact_address = IntPtr.Add(handle, func_address_rva);
                     break;
-
                 }
             }
             return func_exact_address;
         }
+
+        public static IntPtr GetfuncaddressbyHash(string library, BigInteger hash)
+        {
+            IntPtr handle = LoadLibrary(library);
+
+            STRUCTS.IMAGE_DOS_HEADER dosheader = (STRUCTS.IMAGE_DOS_HEADER)Marshal.PtrToStructure(handle, typeof(STRUCTS.IMAGE_DOS_HEADER));
+
+            IntPtr sgn = IntPtr.Add(handle, (int)dosheader.e_lfanew);
+            STRUCTS.SIGNATURE sign = (STRUCTS.SIGNATURE)Marshal.PtrToStructure(sgn, typeof(STRUCTS.SIGNATURE));
+
+            int si = 4 * sizeof(byte);
+            IntPtr file_head = IntPtr.Add(sgn, si);
+            STRUCTS.IMAGE_FILE_HEADER fileheader = (STRUCTS.IMAGE_FILE_HEADER)Marshal.PtrToStructure(file_head, typeof(STRUCTS.IMAGE_FILE_HEADER));
+
+            int ti;
+            unsafe
+            {
+                ti = sizeof(STRUCTS.IMAGE_FILE_HEADER);
+            }
+            IntPtr opt_head = IntPtr.Add(file_head, ti);
+            STRUCTS.IMAGE_OPTIONAL_HEADER64 optheader = (STRUCTS.IMAGE_OPTIONAL_HEADER64)Marshal.PtrToStructure(opt_head, typeof(STRUCTS.IMAGE_OPTIONAL_HEADER64));
+
+            IntPtr export_directory = IntPtr.Add(handle, (int)optheader.ExportTable.VirtualAddress);
+
+            STRUCTS.IMAGE_EXPORT_DIRECTORY export_header = (STRUCTS.IMAGE_EXPORT_DIRECTORY)Marshal.PtrToStructure(export_directory, typeof(STRUCTS.IMAGE_EXPORT_DIRECTORY));
+
+            int no_of_names = (int)export_header.NumberOfNames;
+
+            IntPtr address_functions = IntPtr.Add(handle, (int)export_header.AddressOfFunctions);
+            IntPtr address_names = IntPtr.Add(handle, (int)export_header.AddressOfNames);
+
+            IntPtr func_exact_address = IntPtr.Zero;
+            string functionname = "";
+
+            for (int i = 0; i < no_of_names; i++)
+            {
+                IntPtr func_name_address = IntPtr.Add(address_names, (sizeof(int)) * i);
+                int function_name_rva = Marshal.ReadInt32(func_name_address);
+                IntPtr func_name_string = IntPtr.Add(handle, function_name_rva);
+                functionname = Marshal.PtrToStringAnsi(func_name_string);
+                if (GetHashFromString(functionname).Equals(hash))
+                {
+                    IntPtr func_address = IntPtr.Add(address_functions, (sizeof(int)) * i);
+
+                    int func_address_rva = Marshal.ReadInt32(func_address);
+
+                    func_exact_address = IntPtr.Add(handle, func_address_rva);
+                    break;
+                }
+            }
+            return func_exact_address;
+        }
+
         public static long Gethashfromstring(string inp)
         {
             long sm = 0;
+            foreach (char c in inp)
+            {
+                sm = sm * 10 + ((int)c % 10);
+            }
+            return sm;
+        }
+
+        public static BigInteger GetHashFromString(string inp)
+        {
+            BigInteger sm = 0;
             foreach (char c in inp)
             {
                 sm = sm * 10 + ((int)c % 10);
@@ -104,37 +165,6 @@ namespace Athena.Utilities
                 public IntPtr hStdInput;
                 public IntPtr hStdOutput;
                 public IntPtr hStdError;
-            }
-
-            [StructLayout(LayoutKind.Sequential)]
-            public struct PROCESS_INFORMATION
-            {
-                public IntPtr hProcess;
-                public IntPtr hThread;
-                public int dwProcessId;
-                public int dwThreadId;
-            }
-
-            [Flags]
-            public enum ProcessCreationFlags : uint
-            {
-                ZERO_FLAG = 0x00000000,
-                CREATE_BREAKAWAY_FROM_JOB = 0x01000000,
-                CREATE_DEFAULT_ERROR_MODE = 0x04000000,
-                CREATE_NEW_CONSOLE = 0x00000010,
-                CREATE_NEW_PROCESS_GROUP = 0x00000200,
-                CREATE_NO_WINDOW = 0x08000000,
-                CREATE_PROTECTED_PROCESS = 0x00040000,
-                CREATE_PRESERVE_CODE_AUTHZ_LEVEL = 0x02000000,
-                CREATE_SEPARATE_WOW_VDM = 0x00001000,
-                CREATE_SHARED_WOW_VDM = 0x00001000,
-                CREATE_SUSPENDED = 0x00000004,
-                CREATE_UNICODE_ENVIRONMENT = 0x00000400,
-                DEBUG_ONLY_THIS_PROCESS = 0x00000002,
-                DEBUG_PROCESS = 0x00000001,
-                DETACHED_PROCESS = 0x00000008,
-                EXTENDED_STARTUPINFO_PRESENT = 0x00080000,
-                INHERIT_PARENT_AFFINITY = 0x00010000
             }
 
             public struct IMAGE_DOS_HEADER
@@ -260,10 +290,6 @@ namespace Athena.Utilities
                 public UInt32 AddressOfNames;     // RVA from base of image
                 public UInt32 AddressOfNameOrdinals;  // RVA from base of image
             }
-
-            [UnmanagedFunctionPointer(CallingConvention.StdCall, SetLastError = true)]
-            public delegate Boolean CreateProcess(string lpApplicationName, string lpCommandLine, IntPtr lpProcessAttributes, IntPtr lpThreadAttributes, bool bInheritHandles, STRUCTS.ProcessCreationFlags dwCreationFlags, IntPtr lpEnvironment, string lpCurrentDirectory, ref STRUCTS.STARTUPINFO lpStartupInfo, out STRUCTS.PROCESS_INFORMATION lpProcessInformation);
-
         }
     }
 }

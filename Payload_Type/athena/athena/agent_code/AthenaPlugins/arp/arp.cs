@@ -4,7 +4,6 @@ using Athena.Utilities;
 using System.Net;
 using System.Runtime.InteropServices;
 using System.Text;
-using static Athena.Commands.DynamicHandler;
 
 namespace Plugins
 {

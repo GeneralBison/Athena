@@ -7,6 +7,7 @@ using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
+using Athena.Utilities;
 
 namespace coff.coff
 {
@@ -21,7 +22,6 @@ namespace coff.coff
         //private DynamicHandler.DynamicHpAllc dlgHeapAlloc = (DynamicHandler.DynamicHpAllc)DynamicHandler.findDeleg("kernel32.dll", DynamicHandler.HpAllc, typeof(DynamicHandler.DynamicHpAllc));
         private DynamicHandler.DynamicFreeHeap dlgFreeHeap = (DynamicHandler.DynamicFreeHeap)DynamicHandler.findDeleg("kernel32.dll", DynamicHandler.FreeHeap, typeof(DynamicHandler.DynamicFreeHeap));
         private DynamicHandler.DynamicVirtForFree dlgVirtFree = (DynamicHandler.DynamicVirtForFree)DynamicHandler.findDeleg("kernel32.dll", DynamicHandler.VirtForFree, typeof(DynamicHandler.DynamicVirtForFree));
-        //private DynamicHandler.DynamicCrtThrd dlgCrtThrd = (DynamicHandler.DynamicCrtThrd)DynamicHandler.findDeleg(".dll", DynamicHandler.CrtThrd, typeof(DynamicHandler.DynamicCrtThrd));
         private IMAGE_FILE_HEADER file_header;
         private List<IMAGE_SECTION_HEADER> section_headers;
         private List<IMAGE_SYMBOL> symbols;
@@ -274,12 +274,7 @@ namespace coff.coff
 
                     //For some reason when hinvoking this the heap is invalid
                     var mem = NativeDeclarations.HeapAlloc(heap_handle, (uint)NativeDeclarations.HeapAllocFlags.HEAP_ZERO_MEMORY, (uint)this.global_buffer_size);
-                    //this.global_buffer = NativeDeclarations.VirtualAlloc(IntPtr.Zero, (uint)this.global_buffer_size, NativeDeclarations.MEM_COMMIT, NativeDeclarations.PAGE_READWRITE);
-                    //Logger.Debug($"Allocated a {this.global_buffer_size} bytes global buffer @ {mem.ToInt64():X}");
                     var symbol_addr = new IntPtr(this.base_addr.ToInt64() + symbol.Value + this.section_headers[(int)symbol.SectionNumber - 1].PointerToRawData);
-                    //Logger.Debug("Found global buffer");
-                    //Logger.Debug($"\t[=] Address: {symbol_addr.ToInt64():X}");
-                    //write the address of the global buffer we allocated to allow it to move around (e.g. realloc)
                     Marshal.WriteIntPtr(symbol_addr, mem);
                     this.global_buffer = symbol_addr;
                     // save the location of our global_buffer_ptr

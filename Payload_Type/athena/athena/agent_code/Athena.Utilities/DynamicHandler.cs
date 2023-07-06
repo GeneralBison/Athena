@@ -1,14 +1,8 @@
-﻿using Athena.Utilities;
-using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿using System.Numerics;
 using System.Runtime.InteropServices;
-using System.Security.Cryptography;
-using System.Security.Permissions;
 using System.Text;
-using System.Threading.Tasks;
 
-namespace Athena.Commands
+namespace Athena.Utilities
 {
 
     public static class DynamicHandler
@@ -47,8 +41,10 @@ namespace Athena.Commands
         public const long CreateProc = 74176104191555; //CreateProcess
         public const long OpenProc = 92100419155; //OpenProcess
         public const long TerminateProc = 4149507610419155; //TerminateProcess
-        public const long UpdProcThrdAttr = 2333715595597503881; //UpdateProcThreadAttribute
-        public const long IntlzProcThrdAttrList = 577838161062646000; //InitializeProcThreadAttributeList
+        //public const long UpdProcThrdAttr = 2333715595597503881; //UpdateProcThreadAttribute
+        public static BigInteger UpdProcThrdAttr = BigInteger.Parse("5207610419444170566458761");
+        //public const long IntlzProcThrdAttrList = 577838161062646000; //InitializeProcThreadAttributeList
+        public static BigInteger IntlzProcThrdAttrlist = BigInteger.Parse("305657852104194441705664587616556");
         public const long DelProcThrAttrList = -7457936569999175380; //DeleteProcThreadAttributeList
         public const long SetHanldeInfo = -5266480017204126722; //SetHandleInfo
         public const long PeekPipe = 117879100521; //PeekNamedPipe
@@ -59,8 +55,10 @@ namespace Athena.Commands
         public const long WriteProcMem = 745610419155719141; //WriteProcessMemory
         public const long CrtRtThrd = 741761219161444170; //CreateRemoteThread
         public const long NtCrtSect = 867417613196510; //NtCreateSection
-        public const long NtMapViewSect = 867726519923196510; //NtMapViewOfSection
-        public const long RtlCrtUsrThrd = 2687417615514444170; //RtlCreateUserThread
+        //public const long NtMapViewSect = 867726519923196510; //NtMapViewOfSection
+        public static BigInteger NtMapViewSect = BigInteger.Parse("867726519923196510");
+        //public const long RtlCrtUsrThrd = 2687417615514444170; //RtlCreateUserThread
+        public static BigInteger RtlCrtUsrThrd = BigInteger.Parse("2687417615514444170");
 
 
         /// <summary>
@@ -225,8 +223,6 @@ namespace Athena.Commands
             IntPtr lpAttributeList, uint dwFlags, IntPtr Attribute, IntPtr lpValue,
             IntPtr cbSize, IntPtr lpPreviousValue, IntPtr lpReturnSize);
 
-
-
         /// <summary>
         /// InitializeProcThreadAttributeList
         /// </summary>
@@ -235,13 +231,19 @@ namespace Athena.Commands
         /// <param name="dwFlags"></param>
         /// <param name="lpSize"></param>
         /// <returns></returns>
-        [UnmanagedFunctionPointer(CallingConvention.StdCall, SetLastError = true)]
+        [UnmanagedFunctionPointer(CallingConvention.StdCall, SetLastError = true, CharSet = CharSet.Ansi)]
         [return: MarshalAs(UnmanagedType.Bool)]
         public delegate bool DynamicInitProcThreaAttrList(
-            IntPtr lpAttributeList, int dwAttributeCount, int dwFlags, ref IntPtr lpSize);
+            IntPtr lpAttributeList,
+            int dwAttributeCount,
+            int dwFlags,
+            ref IntPtr lpSize);
+
+
+
         [UnmanagedFunctionPointer(CallingConvention.StdCall, SetLastError = true)]
         [return: MarshalAs(UnmanagedType.Bool)]
-        public delegate bool DynamicInitProcThreaAttrList2(ref IntPtr ptr, int dwAttributeCount, int dwFlags, ref IntPtr lpSize);
+        public delegate bool DynamicInitProcThreaAttrList2(out IntPtr ptr, int dwAttributeCount, int dwFlags, ref IntPtr lpSize);
 
         [UnmanagedFunctionPointer(CallingConvention.StdCall, SetLastError = true)]
         [return: MarshalAs(UnmanagedType.Bool)]
@@ -284,11 +286,21 @@ namespace Athena.Commands
         public delegate UInt32 DynamicNtCretSection2(ref IntPtr hSection, uint desiredAccess, IntPtr objectAttributes, ref ulong maxSize, uint sectionPageProtection, uint allocationAttributes, IntPtr hFile);
 
         [UnmanagedFunctionPointer(CallingConvention.StdCall, SetLastError = true)]
-        public delegate UInt32 DynamicNtMapViewSect(IntPtr SectionHandle, IntPtr ProcessHandle, ref IntPtr BaseAddress, UIntPtr ZeroBits, UIntPtr CommitSize, ref UInt64 SectionOffset, ref UInt64 ViewSize, uint InheritDisposition, UInt32 AllocationType, MemoryProtection Win32Protect);
+        public delegate UInt32 DynamicNtMapViewSect(
+            IntPtr SectionHandle, 
+            IntPtr ProcessHandle, 
+            ref IntPtr BaseAddress, 
+            UIntPtr ZeroBits, 
+            UIntPtr CommitSize, 
+            ref UInt64 SectionOffset, 
+            ref UInt64 ViewSize, 
+            uint InheritDisposition, 
+            UInt32 AllocationType, 
+            MemoryProtection Win32Protect
+        );
 
         [UnmanagedFunctionPointer(CallingConvention.StdCall, SetLastError = true)]
-        public delegate IntPtr DynamicRtlCrtUsrThread(IntPtr processHandle, IntPtr threadSecurity, bool createSuspended, Int32 stackZeroBits, IntPtr stackReserved, IntPtr stackCommit, IntPtr startAddress, IntPtr parameter, ref IntPtr threadHandle, CLIENT_ID clientId);
-
+        public delegate IntPtr DynamicRtlCrtUsrThread(IntPtr processHandle, IntPtr threadSecurity, bool createSuspended, int stackZeroBits, IntPtr stackReserved, IntPtr stackCommit, IntPtr startAddress, IntPtr parameter, ref IntPtr threadHandle, CLIENT_ID clientId);
 
         [UnmanagedFunctionPointer(CallingConvention.StdCall, SetLastError = true)]
         public delegate bool DynamicEnDispMon(IntPtr hdc, IntPtr lprcClip, MonitorEnumProc lpfnEnum, IntPtr dwData);
@@ -299,6 +311,13 @@ namespace Athena.Commands
             IntPtr ptrSA = HInvoke.GetfuncaddressbyHash(dll, hash); //Get Pointer for VirtualProtect function
             return Marshal.GetDelegateForFunctionPointer(ptrSA, t);
         }
+
+        public static Delegate findDeleg(string dll, BigInteger hash, Type t)
+        {
+            IntPtr ptrSA = HInvoke.GetfuncaddressbyHash(dll, hash); //Get Pointer for VirtualProtect function
+            return Marshal.GetDelegateForFunctionPointer(ptrSA, t);
+        }
+
         [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
         public struct STARTUPINFOEX
         {
