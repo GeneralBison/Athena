@@ -128,7 +128,8 @@ class LoadAssemblyCommand(CommandBase):
             #CompletionFunctionName="functionName"
         )
 
-        groupName = taskData.Task.ParameterGroupName
+        #groupName = taskData.Task.ParameterGroupName
+        groupName = taskData.args.get_parameter_group_name()
 
         if groupName == "InternalLib":
             dllName = taskData.args.get_arg("libraryname")
@@ -176,8 +177,7 @@ class LoadAssemblyCommand(CommandBase):
                 taskData.args.add_arg("asm", file_contents.decode("utf-8"))
             else:
                 raise Exception("Failed to get file contents: " + file.Error)
-
-            response.DisplayParams = f"{dllName}"
+        
         return response
 
     async def process_response(self, task: PTTaskMessageAllData, response: any) -> PTTaskProcessResponseMessageResponse:
