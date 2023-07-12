@@ -5,7 +5,6 @@ using System.Net;
 using System.Text.Json;
 using System.Text;
 using Athena.Commands.Models;
-using Athena.Models;
 using Athena.Commands;
 using Athena.Models.Responses;
 
@@ -150,7 +149,7 @@ namespace Plugins
             }
             catch (Exception e)
             {
-                return e.Message;
+                return e.ToString();
             }
         }
         public string Post(HttpWebRequest req, string data)
@@ -178,7 +177,7 @@ namespace Plugins
             }
             catch (Exception e)
             {
-                return e.Message;
+                return e.ToString();
             }
         }
     }
